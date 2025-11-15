@@ -818,7 +818,7 @@ func destroy(absolute: bool = true):
 	camHUD.removeFilters()
 	camOther.removeFilters()
 	Paths.clearLocalFiles()
-	Paths.clearDirsCache()
+	Paths._clear_dirs_cache()
 	super.destroy(absolute)
 
 func _property_get_revert(property: StringName) -> Variant:

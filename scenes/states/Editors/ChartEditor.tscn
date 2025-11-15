@@ -29,16 +29,15 @@ var chess_nodes: Array[Chess] = [chess_player,chess_opponent,chess_events]
 
 var is_shift_pressed: bool
 func _ready() -> void:
+	chess_events.steps = 1
+	chess_events.length = length
+	add_child(chess_events)
 	var event_icon = Sprite2D.new()
 	event_icon.texture = Paths.texture('eventArrow')
 	event_icon.position.y = -45
 	event_icon.centered = false
 	event_icon.scale = Vector2(0.25,0.25)
 	add_child(event_icon)
-	
-	chess_events.steps = 1
-	chess_events.length = length
-	add_child(chess_events)
 	
 	chess_player.position.x = chess_player.rect_size.x * steps
 	chess_player.steps = steps
@@ -70,9 +69,6 @@ func _update_chess_pos() -> void:
 	for i in chess_nodes: i.position.y = pos*i.rect_size.y
 
 func _process(d: float) -> void:
-	var _l = 10*d 
-	icon_player.scale = icon_player.scale.lerp(icon_player.default_scale,_l)
-	icon_opponent.scale = icon_opponent.scale.lerp(icon_opponent.default_scale,_l)
 	if Conductor.is_playing: _update_chess_pos()
 
 #region Icons
@@ -94,7 +90,7 @@ func getMousePosRounded(_position: Vector2, size: Vector2) -> Vector2: return (_
 func _chess_input(event: InputEvent, chess: Chess, mustPress: bool):
 	if event is InputEventMouseButton:
 		var pos = event.position if is_shift_pressed else getMousePosRounded(event.position,chess.rect_size)
-		
+
 func _input(event: InputEvent):
 	if event is InputEventKey:
 		if event.keycode == KEY_SHIFT: is_shift_pressed = event.pressed
@@ -119,7 +115,7 @@ songName = "test"
 
 [node name="ChessControl" type="Node2D" parent="."]
 position = Vector2(0, 150)
-scale = Vector2(1.5, 1.5)
+scale = Vector2(0.7, 0.7)
 script = SubResource("GDScript_y0grv")
 
 [node name="MouseRect" type="Node2D" parent="ChessControl"]

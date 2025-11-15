@@ -455,7 +455,7 @@ func _check_unspawn_notes():
 		_unspawnIndex += 1
 		spawnNote(unspawn)
 
-func _check_respawn_notes():
+func _check_respawn_notes() -> void:
 	if !respawnNotes or !unspawnNotes: return
 	while _respawnIndex < _unspawnIndex:
 		var note = unspawnNotes[_respawnIndex]
@@ -546,7 +546,7 @@ func _strum_confirm(strum: StrumNote,note: Note, confirmAnim: StringName = &"con
 	if !strum: return
 	
 	if strum.mustPress: strum.animation.play(confirmAnim,true); return
-	if !note.isSustainNote: 
+	if !note.isSustainNote or note.isEndSustain: 
 		strum.strumConfirm(confirmAnim); strum.return_to_static_on_finish = true; return
 	
 	strum.return_to_static_on_finish = note.isEndSustain
@@ -849,7 +849,7 @@ static func getNotesFromData(songData: Dictionary = {}) -> Array[Note]:
 			if note.noteType: types_founded.append(note.noteType)
 			
 			var susLength = float(noteSection[2]) if noteSection.size() >= 3 else 0.0
-			if susLength <= stepCrochet: continue 
+			if !susLength: continue 
 			for i in _create_note_sustains(note,susLength,stepCrochet): _insert_note_to_array(i,_notes)
 	
 	var type_unique: PackedStringArray
@@ -873,20 +873,20 @@ static func _create_note_sustains(note: Note, length: float, stepCrochet: float)
 	var susNotes: Array[NoteSustain] = note.sustainParents
 	var time: float = note.strumTime
 	var index: int = 0
-	var susCount: int = int(length/stepCrochet)
+	var div: float = length/stepCrochet
+	var int_div = int(div)
+	var susCount: int = int_div  if div-int_div < stepCrochet/2.0 else int_div+1
 	while index <= susCount:
 		var step = stepCrochet*index
-		var is_end: bool = index == susCount
-		var sus = createSustainFromNote(note,is_end)
+		var sus_length = minf(stepCrochet, length - step)
+		var sus: NoteSustain = createSustainFromNote(note,index == susCount)
+		sus.sustainLength = sus_length
 		sus.strumTime = time
+		time += sus_length
 		susNotes.append(sus)
 		index += 1
-		if !is_end: 
-			var sus_length = minf(stepCrochet, length - step)
-			sus.sustainLength = sus_length
-			time += sus_length
+
 		
-	
 	susNotes[0].splashDisabled = false
 	
 	susNotes.back().splashDisabled = false
@@ -910,22 +910,19 @@ static func createNoteFromData(data: Array, sectionData: Dictionary, keyCount: i
 	else: note.gfNote = gfSection and note.mustPress == mustHitSection
 	return note
 
-const noteSusVars: Array = [
-	&'noteData',
-	&'noteType',
-	&'gfNote',
-	&'mustPress',
-	&'animSuffix',
-	&'noAnimation',
-	&'isPixelNote',
-]
+
 static func createSustainFromNote(note: Note,isEnd: bool = false) -> NoteSustain:
 	var sus: NoteSustain = NoteSustain.new(note.noteData)
-	sus.splashStyle = ''
+	sus.splashStyle = &''
 	sus.noteParent = note
 	sus.isEndSustain = isEnd
 	sus.splashDisabled = true
-	
-	for noteVars in noteSusVars: sus[noteVars] = note[noteVars]
 	sus.hitHealth /= 2.0
+	
+	sus.noteType = note.noteType
+	sus.gfNote = note.gfNote
+	sus.mustPress = note.mustPress
+	sus.animSuffix = note.animSuffix
+	sus.noAnimation = note.noAnimation
+	sus.isPixelNote = note.isPixelNote
 	return sus

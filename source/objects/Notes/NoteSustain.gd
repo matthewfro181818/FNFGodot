@@ -20,7 +20,7 @@ func _init(data: int) -> void:
 	super._init(data)
 
 func _check_hit() -> void:
-	canBeHit = distance <= 10.0 and (!noteParent or noteParent.wasHit and not isBeingDestroyed)
+	canBeHit = distance <= 15.0 and (!noteParent or noteParent.wasHit and not isBeingDestroyed)
 
 func reloadNote() -> void: ##Reload Note Texture
 	animation.clearLibrary()
@@ -117,7 +117,7 @@ func resetNote() -> void:
 	isBeingDestroyed = false
 
 func killNote() -> void: 
-	canBeHit = false; isBeingDestroyed = true; updateSustain()
+	canBeHit = false; isBeingDestroyed = true; updateNote()
 
 ##Update the Note position from the his [param strumNote].
 func followStrum(strum: StrumNote = strumNote) -> void:

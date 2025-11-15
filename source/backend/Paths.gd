@@ -6,7 +6,7 @@ const game_name: String = "Friday Night Funkin'"
 #region Device
 static var curDevice: StringName = OS.get_name()
 static var is_on_mobile: bool = curDevice == &'Android' or curDevice == &'iOs'
-static var is_system_case_sensitive: bool = curDevice in ['macOS','Linux',"FreeBSD", "NetBSD", "OpenBSD", "BSD"]
+static var is_system_case_sensitive: bool = curDevice in [&'macOS',&'Linux',&"FreeBSD", &"NetBSD", &"OpenBSD", &"BSD"]
 #endregion
 
 #region Paths
@@ -20,10 +20,10 @@ const audio_formats: PackedStringArray = ['.ogg','.wav']
 #endregion
 
 #region Mods
-static var searchAllMods: bool = false: 
+static var searchAllMods: bool: 
 	set(value): searchAllMods = value; updateDirectories()
 
-static var modsFounded: Dictionary[String,Dictionary] = {}
+static var modsFounded: Dictionary[String,Dictionary] 
 static var modsEnabled: PackedStringArray = []
 
 static var enableMods: bool = true:
@@ -31,7 +31,7 @@ static var enableMods: bool = true:
 		enableMods = value
 		updateDirectories()
 		
-static var curMod: String = '': 
+static var curMod: String: 
 	set(mod):
 		if mod == curMod: return
 		curMod = mod
@@ -66,31 +66,31 @@ const data_dirs: PackedStringArray = ['data/','data/songs/']
 #endregion
 
 #region Caches
-static var _files_directories_cache: Dictionary[String,String] = {}
-static var _dir_exists_cache: Dictionary[String,DirAccess] = {}
+static var _files_directories_cache: Dictionary[String,String]
+static var _dir_exists_cache: Dictionary[String,DirAccess]
 
-static var textFiles: Dictionary = {}
-static var fontFiles: Dictionary = {}
+static var textFiles: Dictionary
+static var fontFiles: Dictionary
 
-static var imagesCreated: Dictionary[String,Image] = {}
-static var imagesTextures: Dictionary[String,ImageTexture] = {}
+static var imagesCreated: Dictionary[String,Image]
+static var imagesTextures: Dictionary[String,ImageTexture]
 
-static var songsCreated: Dictionary[String,AudioStream] = {}
-static var soundsCreated: Dictionary[String,AudioStream] = {}
+static var songsCreated: Dictionary[String,AudioStream]
+static var soundsCreated: Dictionary[String,AudioStream]
 
-static var musicCreated: Dictionary[String,AudioStream] = {}
-static var fontsCreated: Dictionary[String,FontFile] = {}
-static var shadersCreated: Dictionary[String,Material] = {}
-static var shadersCodes: Dictionary[String,Shader] = {}
+static var musicCreated: Dictionary[String,AudioStream]
+static var fontsCreated: Dictionary[String,FontFile] 
+static var shadersCreated: Dictionary[String,Material]
+static var shadersCodes: Dictionary[String,Shader]
 
-static var jsonsLoaded: Dictionary[String,Dictionary] = {}
+static var jsonsLoaded: Dictionary[String,Dictionary]
 
-static var modelsCreated: Dictionary[String,Object] = {}
+static var modelsCreated: Dictionary[String,Object]
 
-static var videosCreated: Dictionary[String,VideoStream] = {}
+static var videosCreated: Dictionary[String,VideoStream]
 #endregion
 
-static var dirsToSearch: PackedStringArray = []
+static var dirsToSearch: PackedStringArray 
 
 static func get_exe_path() -> String:
 	match curDevice:
@@ -190,15 +190,8 @@ static func video(path: String) -> VideoStreamTheora: ##Get the [param video] pa
 	return video
 
 #region Audio File Methods
-static func song(path: String) -> AudioStream:
-	if songsCreated.has(path): return songsCreated[path].duplicate()
-	
-	var songPath = songPath(path)
-	if !songPath: return null
-	return audio(songPath)
-
-
 static func audio(path) -> AudioStream:
+	if !path: return null
 	if songsCreated.has(path): return songsCreated[path].duplicate()
 	var stream_path = detectFileFolder(path)
 	if !stream_path: return null
@@ -226,11 +219,14 @@ static func sound(path: String) -> AudioStreamOggVorbis:
 	return audio
 
 static func music(path: String) -> AudioStreamOggVorbis:
-	if not path in musicCreated:
-		var musicPath: String = detectFileFolder('music/'+path+'.ogg')
-		if not musicPath: return null
-		musicCreated[path] = AudioStreamOggVorbis.load_from_file(musicPath)
-	return musicCreated[path]
+	var _music = musicCreated.get(path)
+	if _music: return _music
+	
+	_music = detectFileFolder('music/'+path+'.ogg')
+	if !_music: return null
+	_music = AudioStreamOggVorbis.load_from_file(_music)
+	musicCreated[path] = _music
+	return _music
 #endregion
 #endregion
 
@@ -271,7 +267,6 @@ static func characterPath(path: String) -> String:
 static func songPath(path):
 	path = getPath(path)
 	if !path.begins_with('songs/'): path = 'songs/'+path
-	
 	if !path.get_extension(): path += '.ogg'
 	
 	var paths: PackedStringArray = [path,path.to_lower()]
@@ -319,15 +314,12 @@ static func data(json: String = '',prefix: String = '',folder: String = '') -> S
 	return ''
 
 static func iconPath(path: String) -> String:
-	for iconPath in icons_dirs:
-		var icon = imagePath(iconPath+path)
-		if icon: return icon
+	for iconPath in icons_dirs: var icon = imagePath(iconPath+path); if icon: return icon
 	return ''
 
 
 static func model(path: String) -> Node3D:
-	if path in modelsCreated:
-		return modelsCreated[path]
+	if path in modelsCreated: return modelsCreated[path]
 	
 	for formats in model_formats:
 		var modelPath = detectFileFolder(path+formats)
@@ -349,13 +341,13 @@ static func getPath(path: String, withMod: bool = true) -> String:
 	if !path: return path
 	if path.begins_with(exePath): path = path.right(-_exe_length-1)
 	
-	if !withMod:
-		var find = path.find('/')
-		var path_mod = path.left(find)
-		if path_mod in modsFounded: path = path.right(-find-1)
+	if withMod: return path.strip_edges()
 	
-	path = path.strip_edges()
-	return path
+	var find = path.find('/')
+	var path_mod = path.left(find)
+	if path_mod in modsFounded: path = path.right(-find-1)
+	
+	return path.strip_edges()
 #endregion
 
 #region File metods
@@ -384,14 +376,14 @@ static func saveFile(json: Variant, path: String, extension: String = '.json') -
 	if not path.ends_with(extension): path += extension
 	var folder_acess = FileAccess.open(path, FileAccess.WRITE)
 	if folder_acess: folder_acess.store_string(json)
-	
+
 static func clearFiles() -> void:
 	soundsCreated.clear()
 	imagesTextures.clear()
 	imagesCreated.clear()
 	clearLocalFiles()
 	AnimationService._clearAnims()
-	
+
 static func clearLocalFiles() -> void:
 	shadersCreated.clear()
 	shadersCodes.clear()
@@ -426,8 +418,7 @@ static func loadShader(path: String) -> ShaderMaterial:
 	shadersCreated[absolute_path] = material
 	return material
 
-static func loadShaderCode(path: String) -> Shader:
-	return loadShaderCodeAbsolute(shaderPath(path))
+static func loadShaderCode(path: String) -> Shader: return loadShaderCodeAbsolute(shaderPath(path))
 
 static func loadShaderCodeAbsolute(absolute_path: String) -> Shader:
 	if !absolute_path: return
@@ -445,7 +436,7 @@ static func loadShaderCodeAbsolute(absolute_path: String) -> Shader:
 
 #region Dirs Methods
 static func updateDirectories(): ##Update the folders that the [method detectFileFolder] will search the files.
-	clearDirsCache()
+	_clear_dirs_cache()
 	dirsToSearch.clear()
 	
 	var new_dirs: PackedStringArray
@@ -462,29 +453,27 @@ static func updateDirectories(): ##Update the folders that the [method detectFil
 	new_dirs.append(exe_dir)
 	new_dirs.append('res://assets/')
 	
-	if extraDirectory:
-		for i in new_dirs: dirsToSearch.append(i+extraDirectory+'/'); dirsToSearch.append(i)
+	if extraDirectory: for i in new_dirs: dirsToSearch.append(i+extraDirectory+'/'); dirsToSearch.append(i)
 	else: dirsToSearch.append_array(new_dirs)
 	clearLocalFiles()
+
 static func dir_exists(dir: String): return !!get_dir(dir)
 
-static func get_dir(dir: String):
-	var _dir = _dir_exists_cache.get(dir)
-	if _dir: return _dir
-	
-	if DirAccess.dir_exists_absolute(dir): _dir = DirAccess.open(dir)
+static func get_dir(dir: String) -> DirAccess:
+	if _dir_exists_cache.has(dir): return _dir_exists_cache[dir]
+	var _dir = DirAccess.open(dir)
 	_dir_exists_cache[dir] = _dir
 	return _dir
 
-static func clearDirsCache(): _files_directories_cache.clear(); _dir_exists_cache.clear()
+static func _clear_dirs_cache(): _files_directories_cache.clear(); _dir_exists_cache.clear()
+#endregion
 
+#region get Files At Methods
 static func getFilesAt(folder: String, return_folder: bool = false, filters: Variant = '', with_extension: bool = false) -> PackedStringArray:
 	var f: PackedStringArray = PackedStringArray()
-	if filters and filters is String: 
-		filters = PackedStringArray([filters.right(-1) if filters.begins_with('.') else filters])
+	if filters and filters is String: filters = PackedStringArray([filters.right(-1) if filters.begins_with('.') else filters])
 	_check_filters(filters)
 	for i in dirsToSearch: f.append_array(_getFilesNoCheck(i+folder,return_folder,filters,with_extension))
-	
 	return f
 
 static func _check_filters(filters: PackedStringArray) -> void:
@@ -500,8 +489,20 @@ static func getFilesAtAbsolute(
 	filters: PackedStringArray = PackedStringArray(), 
 	with_extension: bool = false
 ) -> PackedStringArray:
+	if !filters: return _getFilesNoFilters(folder,return_folder,with_extension)
 	_check_filters(filters)
 	return _getFilesNoCheck(folder,return_folder,filters,with_extension)
+
+static func _getFilesNoFilters(folder: String, return_folder: bool = false, with_extension: bool = false) -> PackedStringArray:
+	var dir = get_dir(folder)
+	if !dir: return PackedStringArray()
+	if with_extension: return dir.get_files()
+	
+	var files: Dictionary[String,bool]
+	for file in dir.get_files():
+		if return_folder: files[folder+'/'+file] = true; continue
+		files[file] = true
+	return files.keys()
 
 static func _getFilesNoCheck(
 	folder: String, 
@@ -512,7 +513,7 @@ static func _getFilesNoCheck(
 	var dir = get_dir(folder)
 	if !dir: return PackedStringArray()
 	if !filters and with_extension: return dir.get_files()
-	var files: Dictionary[String,bool] = {}
+	var files: Dictionary[String,bool]
 	for file in dir.get_files():
 		if filters:
 			var file_extension = file.get_extension()
@@ -585,11 +586,10 @@ static func loadJson(path: String) -> Dictionary:
 	if !json: json = loadJsonNoCache(path); jsonsLoaded[path] = json
 	return json
 
-static func loadJsonNoCache(path: String) -> Dictionary:
-	var absolute_path = detectFileFolder(path)
-	return _load_json_absolute(absolute_path) if absolute_path else {}
+static func loadJsonNoCache(path: String) -> Dictionary: return _load_json_absolute(detectFileFolder(path))
 
 static func _load_json_absolute(absolute_path: String) -> Dictionary:
+	if !absolute_path: return {}
 	var json = JSON.parse_string(FileAccess.get_file_as_string(absolute_path))
 	return {} if json == null else json
 #endregion
@@ -602,3 +602,4 @@ static func character(path: String) -> Dictionary[StringName,Variant]:
 	var json = DictionaryUtils.getDictsTyped(loadJsonNoCache(file),TYPE_STRING_NAME)
 	json.merge(Character._convert_psych_to_original(json),true)
 	return json
+#endregion

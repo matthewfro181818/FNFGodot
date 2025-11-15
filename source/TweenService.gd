@@ -38,10 +38,15 @@ static func detect_ease(easing: String, default: Tween.EaseType = Tween.EASE_OUT
 
 var tweens_to_update: Array[RefCounted]
 #region Shader Functions
-func tween_shader(shader_material: ShaderMaterial, parameter: StringName, value: Variant, time: float, easing: StringName = &'') -> TweenerObject:
+func tween_shader(shader_material: ShaderMaterial, parameter: StringName, value: Variant, time: float, easing: StringName = &'') -> TweenerMethod:
 	if !shader_material: return
-	var tween: TweenerObject = TweenerObject.new(shader_material,time,detect_trans(easing),detect_ease(easing))
-	tween.tween_property(parameter,value)
+	
+	var init_val = shader_material.get_shader_parameter(parameter)
+	var tween: TweenerMethod = TweenerMethod.new(
+		func(val): 
+			shader_material.set_shader_parameter(parameter,val),
+		init_val,value,time,detect_trans(easing),detect_ease(easing)
+	)
 	tweens_to_update.append(tween)
 	return tween
 #endregion

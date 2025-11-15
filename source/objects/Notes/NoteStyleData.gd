@@ -8,7 +8,7 @@ const default_style_structure: Dictionary[StringName,Dictionary] = {
 const default_style_type_structure: Dictionary[StringName,Variant] = {
 	&'assetPath': '',
 	&'fps': 24.0,
-	&'scale': 1.0,
+	&'scale': 0.7,
 	&'offsets': [0,0],
 	&'data': {},
 	&'isPixel': false

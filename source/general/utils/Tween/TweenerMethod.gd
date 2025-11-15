@@ -2,6 +2,8 @@ extends "res://source/general/utils/Tween/Tweener.gd"
 var init_val: Variant
 var value: Variant
 var callable: Callable
+
+var _sub: Variant
 func _init(
 	_callable: Callable,
 	_init_val: Variant, 
@@ -13,9 +15,12 @@ func _init(
 	callable = _callable
 	init_val = _init_val
 	value = to
+	_sub = value-init_val
 	duration = _duration
 	transition = _transition
 	ease = _ease
 
+
 func _update() -> void:
-	callable.call(Tween.interpolate_value(init_val,value-init_val,minf(step,duration),duration,transition,ease))
+	if step >= duration: callable.call(value); return
+	callable.call(Tween.interpolate_value(init_val,_sub,step,duration,transition,ease))

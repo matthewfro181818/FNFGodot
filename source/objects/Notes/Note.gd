@@ -133,8 +133,10 @@ func updateNote() -> void:
 
 
 func _check_hit() -> void:
+	if blockHit: canBeHit = false; return
+	if autoHit: canBeHit = distance <= 0.0; return
 	var limit = _rating_offset[3]
-	canBeHit = not blockHit and distance >= -limit and distance <= limit
+	canBeHit = distance >= -limit and distance <= limit
 
 func followStrum(strum: StrumNote = strumNote) -> void:
 	if !strum: return
@@ -142,9 +144,8 @@ func followStrum(strum: StrumNote = strumNote) -> void:
 	var posX: float = strumNote.x + offsetX
 	var posY: float = strumNote.y + offsetY
 	
-	if strumNote._direction_radius:
-		posX += real_distance*strumNote._direction_lerp.y
-		posY += real_distance*strumNote._direction_lerp.x
+	if strumNote._direction_radius: 
+		var lerp_dir = strumNote._direction_lerp; posX += real_distance*lerp_dir.y; posY += real_distance*lerp_dir.x
 	else: posY += real_distance
 	
 	if copyX: x = posX

@@ -60,6 +60,7 @@ func _init(dir: int = 0):
 	hit_action = NoteHit.getInputActions()[dir]
 	
 	offset_follow_scale = true
+	offset_follow_rotation = true
 	animation.animation_finished.connect(func(anim):
 		if anim != &'static' and return_to_static_on_finish and not mustPress: 
 			animation.play(&'static')
