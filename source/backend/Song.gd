@@ -28,7 +28,8 @@ static var audioSuffix: String = &''
 static var audioFolder: String = &''
 static var folder: String = &''
 static var difficulty: String = &''
-static var keyCount: int = 4: set = set_key_count
+static var keyCount: int = 4: 
+	set(val): keyCount = val; FunkinGD.keyCount = val
 
 static func loadJson(json_name: String, _difficulty: String = '') -> Dictionary:
 	var json: Dictionary
@@ -49,7 +50,7 @@ static func loadJson(json_name: String, _difficulty: String = '') -> Dictionary:
 	folder = Paths.getPath(json_path,false).get_base_dir()
 	audioFolder = folder.get_slice('/',folder.get_slice_count('/')-1)
 	
-	json = _loadData(json_path,_difficulty)
+	json = _load_data(json_path,_difficulty)
 	
 	difficulty = _difficulty
 	songJsonName = json_name
@@ -64,7 +65,7 @@ static func loadJson(json_name: String, _difficulty: String = '') -> Dictionary:
 	
 	return json
 
-static func _loadData(json_path: String, difficulty: String = '') -> Dictionary:
+static func _load_data(json_path: String, difficulty: String = '') -> Dictionary:
 	var data = Paths.loadJson(json_path)
 	if !data: return data
 	if data.get('song') is Dictionary: data = data.song
@@ -244,4 +245,3 @@ static func set_song_directory(songName: StringName, difficulty: StringName, fol
 		&'audio_suffix': audio_suffix
 	}
 #region Setters
-static func set_key_count(count: int) -> void: keyCount = count; FunkinGD.keyCount = count

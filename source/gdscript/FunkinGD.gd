@@ -966,11 +966,12 @@ static func loadScript(path: String) -> GDScript:
 
 
 static func _load_script_no_check(path_absolute: String) -> GDScript:
-	var GScript: GDScript = GDScript.new()
-	GScript.resource_path = path_absolute
-	GScript.source_code = FileAccess.get_file_as_string(path_absolute)
-	GScript.reload()
-	return GScript
+	var script: GDScript = GDScript.new()
+	script.source_code = FileAccess.get_file_as_string(path_absolute)
+	script.take_over_path(path_absolute)
+	script.reload()
+	return script
+	#return ResourceLoader.load(path_absolute,"",ResourceLoader.CACHE_MODE_REPLACE)
 
 ##Calls a function in the script, returning a [Variant] that the function returns.
 static func callScript(script: Variant,function: StringName = &'', parameters: Variant = null) -> Variant:

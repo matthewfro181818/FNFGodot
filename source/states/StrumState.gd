@@ -145,15 +145,15 @@ func _init(json_file: StringName = &'', song_difficulty: StringName = &''):
 	
 	notes.name = &'notes'
 
-func _ready():
+func _ready() -> void:
 	loadSong()
 	loadSongObjects()
 	if Paths.is_on_mobile: createMobileGUI()
 	if autoStartSong: startSong()
 
-func createMobileGUI():
+func createMobileGUI() -> void:
 	##HitBox
-	touch_state = load("res://source/objects/Mobile/Hitbox.gd").new()
+	touch_state = load("uid://caqru406gega1").new()
 	add_child(touch_state)
 	touch_state.z_index = 1
 
@@ -181,7 +181,7 @@ func loadSongObjects(): ##Load song data. Used in PlayState
 	var hold_s = SONG.get(&'holdSplashStyle')
 	
 	if arrow_s: arrowStyle = arrow_s
-	else: arrowStyle = 'pixel' if isPixelStage else 'funkin'
+	else: arrowStyle = &'pixel' if isPixelStage else &'funkin'
 	
 	if splash_s: splashStyle = splash_s
 	if hold_s: splashHoldStyle = hold_s
@@ -195,14 +195,13 @@ func loadNotes():
 	if !unspawnNotes:  unspawnNotes = NoteUtils.getNotesFromData(SONG)
 	_unspawnNotesLength = unspawnNotes.size()
 	reloadNotes()
-	
+
 func clearSongNotes():
 	for i in notes.members: i.queue_free()
 	notes.members.clear()
 	_respawnIndex = 0
 	_unspawnIndex = 0
 	unspawnNotes.clear()
-
 
 func startSong() -> void: ##Begins the song. See also [method loadSong].
 	if !Conductor.songs: return
@@ -225,6 +224,7 @@ func seek_to(time: float, kill_notes: bool = true):
 	
 #endregion
 
+#region Strums
 func updateStrumsPosition():
 	var screen_center = ScreenUtils.screenCenter
 	var key_div = keyCount/2.0
@@ -306,6 +306,7 @@ func _create_strums() -> void:
 		strum.mustPress = !playAsOpponent and !botplay
 		strum.modulate.a = defaultStrumAlpha[i]
 		i += 1
+
 func createStrum(i: int, opponent_strum: bool = true, pos: Vector2 = Vector2.ZERO) -> StrumNote:
 	var strum = StrumNote.new(i)
 	strum.loadFromStyle(arrowStyle)
@@ -320,6 +321,7 @@ func createStrum(i: int, opponent_strum: bool = true, pos: Vector2 = Vector2.ZER
 	strumLineNotes.add(strum)
 	strum.name = "StrumNote"
 	return strum
+#endregion
 
 func _process(_d) -> void:  if generateMusic: _songPos = Conductor.songPositionDelayed; updateNotes()
 
@@ -445,6 +447,8 @@ func hitNote(note: Note) -> void: ##Called when the hits a [NoteBase]
 	if note.strumConfirm: _strum_confirm(strum,note,strumAnim)
 	if splashAllowed(note): createSplash(note)
 	note.killNote()
+
+func isPlayerNote(note: Note) -> bool: return note.mustPress != playAsOpponent
 #endregion
 
 func _strum_confirm(strum: StrumNote,note: Note, confirmAnim: StringName = &"confirm"):
@@ -582,12 +586,6 @@ func destroy(absolute: bool = true): ##Remove the state
 		NoteSplash.splash_datas.clear()
 		NoteStyleData.styles_loaded.clear()
 	for note in notes.members: note.kill()
-	
-
-func _set_botplay(is_botplay: bool) -> void:
-	botplay = is_botplay
-	if !is_botplay: updateStrumsMustPress()
-	for i in strumLineNotes.members: i.mustPress = false
 
 func updateStrumsMustPress() -> void:
 	var strums = strumLineNotes.members
@@ -602,6 +600,11 @@ func updateStrumsMustPress() -> void:
 
 
 #region Setters
+func _set_botplay(is_botplay: bool) -> void:
+	botplay = is_botplay
+	if !is_botplay: updateStrumsMustPress()
+	for i in strumLineNotes.members: i.mustPress = false
+
 func set_song_speed(value):
 	songSpeed = value
 	noteSpawnTime = NOTE_SPAWN_TIME/(value/2.0)

@@ -137,8 +137,8 @@ static func _insert_script(script: Object, path: String = '') -> bool:
 	return true
 
 static func removeScript(path: Variant):
-	var script: Object
-	if path is Object: 
+	var script: Resource
+	if path is Resource: 
 		script = path
 		path = _find_script_path(script)
 		if !path: return
@@ -146,11 +146,11 @@ static func removeScript(path: Variant):
 		if path is String: path = _script_path(Paths.getPath(path,false))
 		script = scriptsCreated.get(path)
 		if !script: return
+		
 	scriptsCreated.erase(path)
-	
 	var script_args = arguments.get(script.get_instance_id())
 	for i in script_args:
-		if method_list[i].size() == 1: method_list.erase(script_args[i])
+		if method_list[i].size() == 1: method_list.erase(i)
 		else:  method_list[i].erase(script)
 	FunkinGD.callOnScripts(&'onScriptRemoved',[script,path])
 

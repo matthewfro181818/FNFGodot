@@ -362,6 +362,7 @@ static func getPath(path: String, withMod: bool = true) -> String:
 #region File metods
 static func file_exists(path: StringName) -> bool: return !!detectFileFolder(path)
 
+
 static func get_dialog(dir: String = '') -> FileDialog:
 	var dialog = FileDialog.new()
 	dialog.access = FileDialog.ACCESS_FILESYSTEM
@@ -370,9 +371,7 @@ static func get_dialog(dir: String = '') -> FileDialog:
 	dialog.current_path = (dir if dir_exists(dir) else exePath+'/')
 	dialog.size = ScreenUtils.screenSize/1.5
 	dialog.visible = true
-	dialog.visibility_changed.connect(func():
-		if !dialog.visible: dialog.queue_free()
-	)
+	dialog.visibility_changed.connect(func():if !dialog.visible: dialog.queue_free())
 	dialog.initial_position = Window.WINDOW_INITIAL_POSITION_CENTER_PRIMARY_SCREEN
 	
 	return dialog

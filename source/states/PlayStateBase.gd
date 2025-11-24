@@ -311,7 +311,9 @@ func spawnNote(note): super.spawnNote(note); FunkinGD.callOnScripts(&'onSpawnNot
 
 func reloadNotes():
 	var types = SONG.get('noteTypes')
-	if types: for i in types: FunkinGD.addScript('assets/custom_notetypes/'+i); FunkinGD.addScript('custom_notetypes/'+i)
+	if types: for i in types: 
+		FunkinGD.addScript('assets/custom_notetypes/'+i); 
+		FunkinGD.addScript('custom_notetypes/'+i)
 	super.reloadNotes()
 
 func loadNotes():
@@ -327,7 +329,7 @@ func loadNotes():
 		events_to_load.append_array(events_json.get('events',[]))
 	eventNotes = EventNoteUtils.loadEvents(events_to_load)
 	_is_first_event_load = true
-	
+
 func updateNote(note):
 	var _return = super.updateNote(note)
 	FunkinGD.callOnScripts(&'onUpdateNote',[note])
@@ -347,12 +349,14 @@ func updateNotes() -> void: #Function from StrumState
 func preHitNote(note: Note, character: Variant = null):
 	if !note: return
 	if !note.mustPress: camZooming = true
+	
 	if note.noteType:
 		FunkinGD.callScript(
 			'custom_notetypes/'+note.noteType+'.gd',
 			&'onPreHitThisNote',
 			[note,character]
 		)
+	if isPlayerNote(note): FunkinGD.callOnScripts(&'onPlayerPreHitNote',[note,character])
 	FunkinGD.callOnScripts(&'goodNoteHitPre' if note.mustPress else &'opponentNoteHitPre',[note])
 	FunkinGD.callOnScripts(&'onPreHitNote',[note,character])
 	super.preHitNote(note)
@@ -373,11 +377,10 @@ func hitNote(note: Note, character: Variant = null) -> void:
 			&'onHitThisNote',
 			[note,character]
 		)
-	
+	if isPlayerNote(note): FunkinGD.callOnScripts(&'onPlayerHitNote',[note,character])
 	FunkinGD.callOnScripts(&'goodNoteHit' if note.mustPress else &'opponentNoteHit',[note])
 	FunkinGD.callOnScripts(&'onHitNote',[note,character])
 	super.hitNote(note)
-
 
 func signCharacter(character: Character, note: Note): pass
 
@@ -392,16 +395,16 @@ func noteMiss(note, character: Variant = null) -> void:
 #region Script Methods
 func _load_song_scripts():
 	if loadScripts:
-		print('Loading Scripts from Scripts Folder')
+		#print('Loading Scripts from Scripts Folder')
 		for i in Paths.getFilesAt('scripts',false,'.gd'):
 			FunkinGD.addScript('scripts/'+i)
 	
 	if loadStageScript:
-		print('Loading Stage Script')
+		#print('Loading Stage Script')
 		FunkinGD.addScript('stages/'+curStage+'.gd')
 	
 	if loadSongScript and Song.folder:
-		print('Loading Song Folder Script')
+		#print('Loading Song Folder Script')
 		for i in Paths.getFilesAt(Song.folder,false,'gd'):FunkinGD.addScript(Song.folder+'/'+i)
 
 
@@ -430,20 +433,19 @@ func loadSongObjects() -> void:
 	camHUD.removeFilters()
 	camOther.removeFilters()
 	
-	print('Loading Stage')
+	#print('Loading Stage')
 	Stage.loadSprites()
 	
-	#Load Scripts
-	print('Loading Scripts')
+	#print('Loading Scripts')
 	_load_song_scripts()
 	
-	print('Loading Song Objects')
+	#print('Loading Song Objects')
 	super.loadSongObjects()
 	
-	print('Loading Events')
+	#print('Loading Events')
 	loadEventsScripts()
 	
-	print('Loading Characters')
+	#print('Loading Characters')
 	loadCharactersFromData()
 	
 	if !inModchartEditor:
