@@ -1,5 +1,4 @@
 extends Node
-#const Character = preload("res://source/objects/Sprite/Character.gd")
 const Bar = preload("res://source/objects/UI/Bar.gd")
 const Icon = preload("res://source/objects/UI/Icon.gd")
 const AnimClass = preload("res://source/general/animation/AnimationService.gd")
@@ -36,21 +35,21 @@ var cur_scale: float = 1.0:
 			charJson.scale = value
 
 var cur_frame_rate: float = 24.0
-var cur_looped: bool = false
+var cur_looped: bool
 
 var charJson: Dictionary
 
 
 var cur_image: StringName: set = setCharacterImage
 const singAnimations = [&'singLEFT',&'singDOWN',&'singUP',&'singRIGHT']
-const keys = [KEY_D,KEY_F,KEY_J,KEY_K]
-var _last_save_folder = Paths.exePath+'/'
+const keys: PackedInt32Array = [KEY_D,KEY_F,KEY_J,KEY_K]
+var _character_path: String = Paths.exePath+'/'
 
 @onready var bar = Bar.new('healthBar')
 @onready var icon = Icon.new()
 
 @onready var characterList := $CharacterData/CharacterList
-@onready var animationList := $"TabContainer/Animation Data/Container/Animation Manager/Data/AnimationList"
+@onready var animationList := $"TabContainer/Animation Data/Container/Current Animation/Data/AnimationList"
 @onready var animationGhost := $"CharacterData/AnimationGhost"
 @onready var prefixList := $"TabContainer/Animation Data/Container/Current Animation/Data/PrefixList"
 @onready var prefixListPop: PopupMenu = prefixList.get_popup()
@@ -71,7 +70,7 @@ var _last_save_folder = Paths.exePath+'/'
 @onready var animation_indices := $"TabContainer/Animation Data/Container/Current Animation/Data/Indices"
 @onready var animation_loop := $"TabContainer/Animation Data/Container/Current Animation/Data/Looped"
 @onready var animation_fps := $"TabContainer/Animation Data/Container/Current Animation/Data/FrameRate"
-@onready var animation_insert_name := $"TabContainer/Animation Data/Container/Animation Manager/Data/Insert Animation Name"
+@onready var animation_insert_name := $"TabContainer/Animation Data/Container/Current Animation/Data/Insert Animation Name"
 
 @onready var animation_follow_flip := $"TabContainer/Animation Data/Container/Offsets/Data/Offset Follow Flip"
 @onready var animation_follow_scale := $"TabContainer/Animation Data/Container/Offsets/Data/Offset Follow Scale"
@@ -210,8 +209,8 @@ func set_json_value(value: Variant, property: StringName): charJson[property] = 
 func set_character_value(value: Variant, property: StringName): character_node[property] = value;
 
 func add_anim_offset():
-	if character_node: 
-		character_node.addAnimOffset(cur_anim,cur_offset.x,cur_offset.y)
+	character_node.addAnimOffset(cur_anim,cur_offset.x,cur_offset.y)
+	replayCharAnim()
 
 func get_animation_indices_str(indices = animData.get('frameIndices',[])):
 	var string = ''
@@ -256,7 +255,7 @@ func updateCharacterData():
 	updateDataInfo()
 	updateAnimationList()
 	cur_anim = character_node.animation.current_animation
-	_last_save_folder = Paths.characterPath(curCharacter).get_base_dir()
+	_character_path = Paths.characterPath(curCharacter).get_base_dir()
 	
 func updateDataInfo():
 	icon.reloadIconFromCharacterJson(charJson)
@@ -378,7 +377,7 @@ func _on_flip_sing_direction_toggled(toggled_on: bool) -> void:
 	character_node.animation.play(cur_anim)
 
 func _on_save_character_button_up() -> void:
-	var folders = Paths.get_dialog(_last_save_folder)
+	var folders = Paths.get_dialog(_character_path)
 	folders.file_mode = FileDialog.FILE_MODE_SAVE_FILE
 	folders.current_file = character_node.curCharacter+'.json'
 	folders.add_filter('*.json')
@@ -392,15 +391,15 @@ func _on_save_character_button_up() -> void:
 
 
 func _on_load_character_from_file_button_up() -> void:
-	var dialog = Paths.get_dialog(_last_save_folder)
-	dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	var dialog = Paths.get_dialog(_character_path)
 	dialog.add_filter('*.json')
+	dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
 	dialog.visible = true
-	dialog.title = 'Load Character ( Must be in a "characters" folder! )'
+	dialog.title = 'Load Character'
 	add_child(dialog)
 	dialog.file_selected.connect(func(file):
 		Paths.curMod = Paths.getModFolder(file)
-		character_node.loadCharacter(file.get_file())
+		character_node.loadCharacter(file.get_file().get_basename())
 		updateCharacterData()
 	)
 
@@ -443,13 +442,15 @@ func _on_health_icon_text_submitted(new_text: String) -> void:
 	icon.changeIcon(new_text)
 
 func _on_is_pixel_icon_toggled(toggled_on: bool) -> void:
-	charJson.healthIcon.isPixel = toggled_on
 	icon.set_pixel(toggled_on, charJson.healthIcon.get(&'canScale',false))
-
+	if !toggled_on: charJson.healthIcon.erase(&'isPixel')
+	else: charJson.healthIcon.isPixel = true
 
 func _on_scale_icon_toggled(toggled_on: bool) -> void:
-	charJson.healthIcon.canScale = toggled_on
-	icon.set_pixel(charJson.healthIcon.isPixel,toggled_on)
+	icon.set_pixel(charJson.healthIcon.get(&'isPixel',false),toggled_on)
+	if !toggled_on: charJson.healthIcon.erase(&'canScale')
+	else: charJson.healthIcon.canScale = true
+	
 
 func _on_asset_path_text_submitted(new_text: String) -> void:
 	animation_asset.release_focus()
@@ -477,7 +478,6 @@ func _on_remove_animation_button_up() -> void:
 #region Json Data Signals
 func _on_scale_value_changed(value) -> void:
 	character_node.scale = Vector2(value,value)
-	character_node.midpoint_scale = character_node.scale
 	charJson.scale = value
 	updateCameraPosition()
 

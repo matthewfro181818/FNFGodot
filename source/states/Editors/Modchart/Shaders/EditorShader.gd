@@ -31,15 +31,15 @@ func set_objects(new_objects: PackedStringArray):
 		i += 1
 	
 	for o in not_more: 
-		var obj = FunkinGD._find_object(o)
-		if obj is CameraCanvas: obj.removeFilter(self)
+		var obj = FunkinGD.Reflect._find_object(o)
+		if obj is FunkinCamera: obj.removeFilter(self)
 		elif obj is CanvasItem and obj.material == self: obj.material = null
 	
 	
 	#Add Shaders
 	for o in news:
-		var obj = FunkinGD._find_object(o)
-		if obj is CameraCanvas: obj.addFilter(self)
+		var obj = FunkinGD.Reflect._find_object(o)
+		if obj is FunkinCamera: obj.addFilter(self)
 		elif obj is CanvasItem: obj.material = self
 	objects = new_objects
 

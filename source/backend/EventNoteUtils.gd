@@ -7,8 +7,15 @@ static func _get_events_data(events: Array) -> Array[Dictionary]:
 		if data is Array: new_events.append_array(_convert_event_to_new(data))
 		else:
 			var event_variables = get_event_variables(data.e)
-			data.merge(event_base,false); 
-			for i in event_variables: if !data.v.has(i): data.v[i] = event_variables[i].default_value
+			data.merge(event_base,false);
+			if data.v is Dictionary: 
+				for i in event_variables: if !data.v.has(i): data.v[i] = event_variables[i].default_value
+			else:
+				var val = data.v
+				data.v = {}
+				for i in event_variables: data.v[i] = event_variables[i].default_value
+				data.v[event_variables.keys()[0]] = val
+			
 			new_events.append(data)
 	return new_events
 
@@ -27,7 +34,7 @@ static func _convert_event_to_new(data: Array) -> Array[Dictionary]:
 		for v in variables: event.v[v] = variables[v].default_value
 		
 		event.v[first_val] = _convert_event_value_type(i[1],variables[first_val].type,event.v[first_val])
-		if i.size() > 2: 
+		if vars_keys.size() >= 2 and i.size() >= 3: 
 			var second_val = vars_keys[1]
 			event.v[second_val] = _convert_event_value_type(i[2],variables[second_val].type,event.v[second_val])
 		new_events.append(event)

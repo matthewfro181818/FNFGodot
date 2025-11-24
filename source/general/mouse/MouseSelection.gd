@@ -17,9 +17,7 @@ var can_select: bool = true:
 		if !value: visible = false; return
 func _init() -> void:
 	add_child(bg)
-	resized.connect(func():
-		bg.size = size
-	)
+	resized.connect(func(): bg.size = size)
 	visible = false
 	border_color = Color.SKY_BLUE
 	bg.color = Color.LIGHT_BLUE

@@ -2,8 +2,9 @@
 extends FunkinSprite
 
 const NoteStyleData = preload("uid://by78myum2dx8h")
-const Song = preload("uid://cerxbopol4l1g")
 const Note = preload("uid://deen57blmmd13")
+const Song = preload("uid://cerxbopol4l1g")
+
 const directions: PackedStringArray = ['left','down','up','right']
 const note_colors: PackedStringArray = ['Purple','Blue','Green','Red']
 
@@ -14,7 +15,7 @@ var stylePrefix: String
 var noteData: int = 0: set = setNoteData ##The direction of this Note.
 var noteDirection: String = ''
 
-var noteScale: float = 0.7
+var noteScale: float = NoteStyleData.DEFAULT_NOTES_SCALE
 #region Note Styles
 var isPixelNote: bool = false: set = setPixelNote ##Is Pixel Note
 var texture: String: set = setTexture ##Note Texture
@@ -36,24 +37,8 @@ func loadFromStyle(noteStyle: String,prefix: String = stylePrefix):
 	
 func _update_style_data() -> void: styleData = NoteStyleData.getStyleData(styleName)
 
-func reloadNote() -> void: ##Reload the Note animation and his texture.
-	var dir = directions[noteData]
-	var data = styleData.data.get(dir)
-	if data:
-		noteScale = data.scale
-		if !data.prefix: return
-		animation.addAnimByPrefix(&'static', data.prefix,data.fps,true)
-		noteScale = data.scale
-	else: 
-		noteScale = styleData.scale
-		var cut = imageSize/Vector2(Song.keyCount,5)
-		setNoteRect(
-			Rect2(
-				Vector2(cut.x*noteData,cut.y),
-				cut
-			)
-		)
-	setGraphicScale(Vector2(noteScale,noteScale))
+##Reload the Note animation and his texture.
+@abstract func reloadNote() -> void
 
 #region Setters
 func setStyleName(_name: String) -> void: styleName = _name; _update_style_data()

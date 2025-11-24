@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3 uid="uid://cproj0w72ysi"]
 
-[ext_resource type="Shader" uid="uid://bckrib34ee58y" path="res://assets/shaders/Smoke.gdshader" id="1_8prmg"]
+[ext_resource type="Shader" uid="uid://vx2ixvestbob" path="res://assets/shaders/Smoke.gdshader" id="1_8prmg"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_v4g5g"]
 shader = ExtResource("1_8prmg")

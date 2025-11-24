@@ -17,8 +17,6 @@ func _ready():
 	sprite.texture.gradient.colors[1] = Color(0,0,0,0)
 	sprite.texture.repeat = 0
 	add_child(sprite)
-	
-	#var gradiant = GradientTexture1D.new()
 
 func _update_size():
 	sprite.texture.width = ScreenUtils.screenWidth
@@ -27,9 +25,10 @@ func startTrans():
 	sprite.position.x = 0
 	sprite.position.y = -ScreenUtils.screenHeight*2
 	var tween: Tween = create_tween()
-	tween.tween_property(self,'position:y',ScreenUtils.screenHeight*2.0,0.5)
-	tween.tween_callback(func():finished.emit())
+	tween.tween_property(self,^'position:y',ScreenUtils.screenHeight*2.0,0.5)
+	tween.tween_callback(finished.emit)
 	_update_size()
+
 func removeTrans():
 	_update_size()
 	sprite.rotation_degrees = 180

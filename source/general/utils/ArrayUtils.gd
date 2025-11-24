@@ -1,5 +1,7 @@
 class_name ArrayUtils
 
+const EmptyArray: Array = []
+
 const array_types: Dictionary[Variant.Type,bool] = {
 	TYPE_ARRAY: true,
 	TYPE_PACKED_BYTE_ARRAY: true,

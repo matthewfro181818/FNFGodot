@@ -30,6 +30,9 @@ func _init(direction: int = 0):
 		image.scale = (chess_rect_size/size).min(Vector2(1,1))
 	)
 
+func reloadNote() -> void: pass
+
+#region Setters:
 func setNoteData(data: int) -> void:
 	super.setNoteData(data)
 	section_data[1] = data

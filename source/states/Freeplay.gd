@@ -19,9 +19,9 @@ static var curMod: int = 0
 static var curSongIndex: int = 0
 static var curDifficulty: int = 0
 
-var weekList: Dictionary = {}
+var weekList: Dictionary
 
-var tweenStarted: bool = false
+var tweenStarted: bool 
 var difficulty: String = ''
 
 var menuSong: AudioStreamPlayer = AudioStreamPlayer.new()
@@ -35,11 +35,11 @@ var menuSong: AudioStreamPlayer = AudioStreamPlayer.new()
 @onready var modSelectRight: FunkinSprite = FunkinSprite.new(true)
 
 var diffiTween: Tween
-var weeks: Array = []
+var weeks: Array
 
-var cur_song: StringName = ''
+var cur_song: StringName
 
-static var mods: Array = []
+static var mods: Array
 
 var bar_top = ColorRect.new()
 var bar_bottom = ColorRect.new()
@@ -66,12 +66,6 @@ signal exiting
 
 func _ready():
 	name = 'Freeplay'
-	#var bg = Sprite2D.new()
-	#bg.centered = false
-	#bg.texture = Paths.texture('menuBG')
-	#bg.name = &'bg'
-	#bg.modulate = Color.GRAY
-	#add_child(bg)
 	
 	add_child(bar_top)
 	add_child(bar_bottom)
@@ -133,7 +127,7 @@ func _ready():
 	var old_selected = curSongIndex
 	setModSelected(curMod)
 	setSongSelected(old_selected,false)
-	exiting.connect(func(): if cur_week_node: for i in get_children(): remove_child(i); queue_free())
+	exiting.connect(_on_exiting)
 	Global.onSwapTree.connect(func(): exiting.emit(); menuSong.queue_free(),CONNECT_ONE_SHOT)
 	
 	bar_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
@@ -143,7 +137,11 @@ func _ready():
 	if cur_week_node:
 		cur_week_node.position.x = -ScreenUtils.screenWidth
 		bar_tween.parallel().tween_property(cur_week_node,"position:x",0,1)
-		
+
+func _on_exiting() -> void:
+	for i in get_children(): remove_child(i);
+	queue_free()
+
 func loadWeekFrom(path: String):
 	var mod = Paths.getModFolder(path)
 	if !mod: mod = Paths.game_name
@@ -183,7 +181,7 @@ func loadWeekFrom(path: String):
 		mod_node.add_child(text)
 		index += 1
 	mods.append(mod_array)
-	
+
 func loadWeekProperties(week_data: Dictionary) -> Dictionary:
 	var dif: String = week_data.get('difficulties','')
 	if !dif: dif = 'easy, normal, hard'
@@ -204,11 +202,10 @@ func loadWeekProperties(week_data: Dictionary) -> Dictionary:
 		var song_data = [alphabet, icon, bg_color, difficuty_data]
 		data.songs.append(song_data)
 	return data
-	
+
 func loadWeeks():
 	loadWeekFrom('assets/weeks')
 	for i in Paths.getModsEnabled(): loadWeekFrom('mods/'+i+'/weeks')
-	#loadSongs(mod)
 
 func setSongSelected(selected: int = 0, play_sound: bool = true):
 	var song_list = cur_mod_data[3]
@@ -231,7 +228,7 @@ func setSongSelected(selected: int = 0, play_sound: bool = true):
 		cur_song_difficulties = cur_song_difficulties_data.keys()
 	
 	if play_sound: FunkinGD.playSound(Paths.sound('scrollMenu'))
-	
+
 func load_game(
 	song_name: StringName, 
 	difficulty: StringName, 

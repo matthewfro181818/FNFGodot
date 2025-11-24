@@ -65,7 +65,10 @@ static var data: Dictionary[StringName, Variant] = {
 	&'playAsOpponent': false,
 	&'notHitSustainWhenMiss': false,
 	
-	&'comboOffset': PackedInt64Array([700,-250,-500,-200]),
+	&'comboOffset': PackedInt64Array([
+		700,-250, #Combo Pos
+		-550,-250 #Numer Pos
+	]),
 	&'miraculousRating': false,
 	&'miraculousOffset': 25.0,
 	&'sickOffset': 45.0,

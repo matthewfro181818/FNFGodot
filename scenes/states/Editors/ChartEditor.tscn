@@ -38,7 +38,7 @@ var is_shift_pressed: bool
 var _notes_created: Array = []
 var _notes_section_created: Array[NoteChart] = []
 
-var eventIndex: int = 0.0
+var eventIndex: int = 0
 var events_created: Array
 
 func _ready() -> void:

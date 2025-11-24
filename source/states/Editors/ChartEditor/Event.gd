@@ -1,5 +1,5 @@
 extends Sprite2D
-const EventNoteUtils = preload("res://source/objects/Notes/EventNoteUtils.gd")
+const EventNoteUtils = preload("uid://dqymf0mowy0dt")
 
 var events: Array[Dictionary] = []
 

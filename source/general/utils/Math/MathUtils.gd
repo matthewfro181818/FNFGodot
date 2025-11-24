@@ -72,77 +72,46 @@ const math_types: Dictionary = {
 	TYPE_COLOR: true,
 }
 
-static func type_via_string(type: String) -> int:
-	return type_strings.get(type.to_lower(),TYPE_NIL)
+static func type_via_string(type: String) -> int: return type_strings.get(type.to_lower(),TYPE_NIL)
 	
-static func convert_type_via_string(value: Variant, type: String) -> Variant:
-	return type_convert(value,type_via_string(type))
+static func convert_type_via_string(value: Variant, type: String) -> Variant: return type_convert(value,type_via_string(type))
 	
 static func get_new_value(type: int) -> Variant:
 	match type:
-		TYPE_FLOAT:
-			return 0.0
-		TYPE_INT:
-			return 0
-		TYPE_ARRAY:
-			return []
-		TYPE_PACKED_BYTE_ARRAY:
-			return PackedByteArray()
-		TYPE_PACKED_COLOR_ARRAY:
-			return PackedColorArray()
-		TYPE_PACKED_FLOAT32_ARRAY:
-			return PackedFloat32Array()
-		TYPE_PACKED_FLOAT64_ARRAY:
-			return PackedFloat64Array()
-		TYPE_PACKED_INT32_ARRAY:
-			return PackedInt32Array()
-		TYPE_PACKED_INT64_ARRAY:
-			return PackedInt64Array()
-		TYPE_PACKED_STRING_ARRAY:
-			return PackedStringArray()
-		TYPE_PACKED_VECTOR2_ARRAY:
-			return PackedVector2Array()
-		TYPE_PACKED_VECTOR3_ARRAY:
-			return PackedVector3Array()
-		TYPE_PACKED_VECTOR4_ARRAY:
-			return PackedVector4Array()
-		TYPE_DICTIONARY:
-			return {}
-		TYPE_VECTOR2:
-			return Vector2.ZERO
-		TYPE_VECTOR2I:
-			return Vector2i.ZERO
-		TYPE_VECTOR3:
-			return Vector3.ZERO
-		TYPE_VECTOR3I:
-			return Vector3i.ZERO
-		TYPE_VECTOR4:
-			return Vector4.ZERO
-		TYPE_VECTOR4I:
-			return Vector4i.ZERO
-		TYPE_STRING:
-			return ''
-		TYPE_STRING_NAME:
-			return StringName('')
-		TYPE_COLOR:
-			return Color.WHITE
-		TYPE_BOOL:
-			return false
-		TYPE_BASIS:
-			return Basis()
-		_:
-			return null
+		TYPE_FLOAT: return 0.0
+		TYPE_INT: return 0
+		TYPE_ARRAY: return []
+		TYPE_PACKED_BYTE_ARRAY: return PackedByteArray()
+		TYPE_PACKED_COLOR_ARRAY: return PackedColorArray()
+		TYPE_PACKED_FLOAT32_ARRAY: return PackedFloat32Array()
+		TYPE_PACKED_FLOAT64_ARRAY: return PackedFloat64Array()
+		TYPE_PACKED_INT32_ARRAY: return PackedInt32Array()
+		TYPE_PACKED_INT64_ARRAY: return PackedInt64Array()
+		TYPE_PACKED_STRING_ARRAY: return PackedStringArray()
+		TYPE_PACKED_VECTOR2_ARRAY: return PackedVector2Array()
+		TYPE_PACKED_VECTOR3_ARRAY: return PackedVector3Array()
+		TYPE_PACKED_VECTOR4_ARRAY: return PackedVector4Array()
+		TYPE_DICTIONARY: return {}
+		TYPE_VECTOR2: return Vector2.ZERO
+		TYPE_VECTOR2I: return Vector2i.ZERO
+		TYPE_VECTOR3: return Vector3.ZERO
+		TYPE_VECTOR3I: return Vector3i.ZERO
+		TYPE_VECTOR4: return Vector4.ZERO
+		TYPE_VECTOR4I: return Vector4i.ZERO
+		TYPE_STRING: return ''
+		TYPE_STRING_NAME: return &''
+		TYPE_NODE_PATH: return ^''
+		TYPE_COLOR: return Color.WHITE
+		TYPE_BOOL: return false
+		TYPE_BASIS: return Basis()
+		_: return null
 
-static func _have_index(variable: Variant) -> bool:
-	return typeof(variable) in indexable_types
-	
 static func value_exists(obj: Variant, value: Variant) -> bool:
 	match typeof(obj):
 		TYPE_OBJECT,TYPE_DICTIONARY: return value in obj
 		TYPE_ARRAY: return ArrayUtils.array_has_index(obj,int(value))
-		TYPE_VECTOR2,TYPE_VECTOR2I: return value in ['x','y']
-		TYPE_VECTOR3,TYPE_VECTOR3I: return value in ['x','y','z']
+		TYPE_VECTOR2,TYPE_VECTOR2I: return value in [&'x',&'y']
+		TYPE_VECTOR3,TYPE_VECTOR3I: return value in [&'x',&'y',&'z']
 		TYPE_VECTOR4,TYPE_VECTOR4I: return value in VectorUtils.vectors_index
-		TYPE_COLOR: return value in ['r','g','b','a']
-		_:
-			return false
+		TYPE_COLOR: return value in [&'r',&'g',&'b',&'a']
+	return false

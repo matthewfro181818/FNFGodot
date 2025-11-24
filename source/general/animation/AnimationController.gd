@@ -109,7 +109,7 @@ func play() -> void: ##Start the animation.
 func play_reverse() -> void: ##Play the animation in reverse.
 	reverse = true
 	_float_frame = maxFrames-1
-	loop_frame = _float_frame
+	loop_frame = int(_float_frame)
 	start_anim()
 	
 func start_anim():
@@ -136,7 +136,7 @@ func stop() -> void: ##Stop the animation, making it not process frames.
 	_float_frame = 0
 	animation_stopped.emit()
 
-func set_frame(frame: int = _real_cur_frame) -> void:
+func set_frame(frame: int) -> void:
 	curFrameData = frames[frame]
 	for i in curFrameData:
 		if i is NodePath: node_to_animate.set_indexed(i,curFrameData[i])

@@ -1,21 +1,5 @@
 class_name StringUtils
 
-const points: PackedStringArray = ['.',',','[',']','´','`',"'",'"',';',':','+','-','/','*']
-const letters: PackedStringArray =  [
-	'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','ç','ã'
-]
-static func string_has_letter(string: StringName) -> bool:
-	for text: String in letters:
-		if text in string or text.to_upper() in string:
-			return true
-	return false
-
-static func string_has_points(string: StringName) -> bool:
-	for text: String in points:
-		if text in string:
-			return true
-	return false
-
 static func split_no_space(text: String, delimiter: String) -> Array:
 	var split = []
 	for splits in text.split(delimiter):
@@ -33,8 +17,7 @@ static func replace_chars_from_dict(string: String,chars_to_replace: Dictionary)
 		new_s.append(i)
 	return ''.join(new_s)
 
-static func first_letter_upper(string: String) -> String:
-	return string[0].to_upper() + string.right(-1)
+static func first_letter_upper(string: String) -> String: return string[0].to_upper() + string.right(-1)
 
 static func get_function_data(string: String) -> Array:
 	var parameters = PackedStringArray()

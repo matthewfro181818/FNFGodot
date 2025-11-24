@@ -174,12 +174,12 @@ resource_name = "Properties"
 script/source = "extends Panel
 const EditorMaterial = preload(\"uid://dva6hqf80sxay\")
 
-const StrumNote = preload(\"res://source/objects/Notes/StrumNote.gd\")
-const Character = preload(\"res://source/objects/Sprite/Character.gd\")
-const CameraCanvas = preload(\"res://source/objects/Display/Camera/Camera.gd\")
-const SpriteGroup = preload(\"res://source/general/groups/SpriteGroup.gd\")
-const PlayState = preload(\"res://source/states/PlayState.gd\")
-const Bar = preload(\"res://source/objects/UI/Bar.gd\")
+const StrumNote = preload(\"uid://coipwnceltckt\")
+const Character = preload(\"uid://gou2lt74gx0i\")
+const FunkinCamera = preload(\"uid://dxuhy4065ximc\")
+const SpriteGroup = preload(\"uid://bw05ggx2oitdf\")
+const PlayState = preload(\"uid://cg2ig10imhwri\")
+const Bar = preload(\"uid://cesg7bsxvgdcm\")
 
 var screen_size_mult = ScreenUtils.screenSize*2
 
@@ -210,7 +210,7 @@ var values := {
 		'camZooming': null,
 		'botplay': null
 	},
-	CameraCanvas:{
+	FunkinCamera:{
 		'x': {'range': [-screen_size_mult.x,screen_size_mult.x,1]},
 		'y': {'range': [-screen_size_mult.x,screen_size_mult.x,1]},
 		'width': {'range': [0,ScreenUtils.screenSize.x,5]},
@@ -820,9 +820,9 @@ func removeGrid(grid: Grid) -> void:
 	
 	if obj is EditorMaterial:
 		for i in obj.objects:
-			var node = FunkinGD._find_object(i)
+			var node = FunkinGD.Reflect._find_object(i)
 			if !node: continue
-			if node is CameraCanvas: node.removeFilter(obj)
+			if node is FunkinCamera: node.removeFilter(obj)
 			else: node.material = null
 	elif obj:
 		#Return value to default
@@ -840,7 +840,7 @@ func show_grid(show: bool, grid: Grid):
 
 func getGridObject(grid: Variant) -> Object:
 	var obj = grid.object
-	if !obj: obj = FunkinGD._find_object(grid.object_name)
+	if !obj: obj = FunkinGD.Reflect._find_object(grid.object_name)
 	return obj
 
 func grid_input(event: InputEvent, grid: Grid):

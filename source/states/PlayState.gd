@@ -15,9 +15,9 @@ var boyfriendGroup: SpriteGroup = SpriteGroup.new() #Added in Stage.loadSprites(
 var dadGroup: SpriteGroup = SpriteGroup.new()# Added in Stage.loadSprites()
 var gfGroup: SpriteGroup = SpriteGroup.new()# Also added in Stage.loadSprites()
 
-var camGame: CameraCanvas = CameraCanvas.new()
+var camGame: FunkinCamera = FunkinCamera.new()
 
-var cameras: Array[CameraCanvas] = [camGame,camHUD,camOther]
+var cameras: Array[FunkinCamera] = [camGame,camHUD,camOther]
 @export_category('Game Over')
 const GameOverSubstate := preload("res://source/substates/GameOverSubstate.gd")
 
@@ -142,23 +142,23 @@ func addCharacterToList(type: int = 0,charFile: StringName = 'bf') -> Character:
 	return newCharacter
 
 
-func _on_hit_note(note: Note, character: Variant = getCharacterNote(note)):
-	if not note: return
-	if note.noAnimation: super._on_hit_note(note,character); return
-	
+func preHitNote(note: Note, character: Variant = getCharacterNote(note)):  super.preHitNote(note,character)
+
+func hitNote(note: Note, character: Variant = getCharacterNote(note)): super.hitNote(note,character)
+
+func signCharacter(character: Character, note: Note):
 	var mustPress: bool = note.mustPress
 	var target = boyfriend if mustPress else dad
 	var gfNote = note.gfNote or (gfSection and mustPress == mustHitSection)
-	var dance: bool = not (mustPress != playAsOpponent and not botplay)
+	var character_auto_dance: bool = not (mustPress != playAsOpponent and not botplay)
 	
 	if gfNote:
 		if target: target.autoDance = true
-		if gf: gf.autoDance = dance
+		if gf: gf.autoDance = character_auto_dance
 	else:
-		if target: target.autoDance = dance
-		if gf: gf.autoDance = true
+		if target: target.autoDance = character_auto_dance
+		if gf: gf.autoDance = character_auto_dance
 	
-	if !character: super._on_hit_note(note,character); return;
 	var animNote = singAnimations[note.noteData]
 	
 	var anim = character.animation
@@ -166,9 +166,6 @@ func _on_hit_note(note: Note, character: Variant = getCharacterNote(note)):
 	character.heyTimer = 0.0
 	character.specialAnim = false
 	if !note.animSuffix or !anim.play(animNote+note.animSuffix,true): anim.play(animNote,true)
-	
-	super._on_hit_note(note,character)
-
 func noteMiss(note: Note, character: Variant = getCharacterNote(note)):
 	if character: character.animation.play(singAnimations[note.noteData]+'miss',true)
 	super.noteMiss(note,character)
@@ -200,9 +197,10 @@ func changeCharacter(type: int = 0, character: StringName = 'bf') -> Object:
 	
 	if character_obj:
 		var char_anim = character_obj.animation
-		if newCharacter.animation.has_animation(char_anim.current_animation): 
-			newCharacter.animation.play(char_anim.current_animation)
-			newCharacter.animation.curAnim.curFrame = char_anim.curAnim.curFrame
+		var new_char_anim = newCharacter.animation
+		if new_char_anim.has_animation(char_anim.current_animation): 
+			new_char_anim.play(char_anim.current_animation)
+			new_char_anim.curAnim.curFrame = char_anim.curAnim.curFrame
 		else: newCharacter.dance()
 		
 		newCharacter.material = character_obj.material
@@ -224,8 +222,6 @@ func changeCharacter(type: int = 0, character: StringName = 'bf') -> Object:
 	FunkinGD.callOnScripts(&'onChangeCharacter',[type,newCharacter,character_obj])
 	updateIconsPivot()
 	if !isCameraOnForcedPos and detectSection() == char_name: moveCamera(char_name)
-	
-	
 	return newCharacter
 
 func clear():

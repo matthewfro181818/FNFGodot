@@ -64,12 +64,6 @@ var scaling_offset: bool = false
 ##The limit of the velocity, set [Vector2](-1,-1) to unlimited.
 @export var maxVelocity: Vector2 = Vector2(999,999)
 
-var _added_light_points: bool = false
-
-var _graphic_offset: Vector2 = Vector2.ZERO
-
-var _midpoint_scale: Vector2 = Vector2.ONE
-var _flip_offset: Vector2 = Vector2.ZERO
 
 var groups: Array[SpriteGroup] = []
 
@@ -94,9 +88,6 @@ func _process(delta: float) -> void:
 		_position += clamp(velocity,-maxVelocity,maxVelocity) * delta
 		return
 	_updatePos()
-
-func centerOrigin():
-	_midpoint_scale = Vector2(scale.x,scale.y)
 
 ##[codeblock]
 ##Sprite.set_pos(Vector2(1.0,1.0)) #Move Sprite to (1.0,1.0).

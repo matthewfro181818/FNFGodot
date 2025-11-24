@@ -1,10 +1,12 @@
 #@icon("res://icons/splash.png")
 extends FunkinSprite
 
+const Note = preload("uid://deen57blmmd13")
 const NoteStyleData = preload("uid://by78myum2dx8h")
 const NoteSplash = preload("res://source/objects/Notes/NoteSplash.gd")
 
-static var splash_datas: Dictionary[StringName,Dictionary] = {}
+const SplashOffset = Vector2(100,100)
+static var splash_datas: Dictionary[StringName,Dictionary]
 static var mosaicShader: Material
 
 enum SplashType{
@@ -54,7 +56,8 @@ func loadSplash(style: StringName,type: SplashType, prefix: StringName = &'defau
 
 	if !splashData: return false
 	addSplashAnimation(self,prefix)
-	scale = Vector2(splashData.scale,splashData.scale)
+	var _splash_scale = splashData.get(&'scale',1.0)
+	scale = Vector2(_splash_scale,_splash_scale)
 	return true
 
 func _process(_d) -> void:
@@ -69,25 +72,29 @@ func followStrum() -> void:
 	_position = strum._position
 
 
+static func getSplashTypeFromNote(note: Note) -> SplashType:
+	if !note.isSustainNote: return SplashType.NORMAL
+	return SplashType.HOLD_COVER_END if note.isEndSustain else SplashType.HOLD_COVER
+
 static func addSplashAnimation(splash: NoteSplash,prefix: StringName):
 	var data = splash.splashData.data.get(prefix)
 	if !data: data = splash.splashData.data.get(&'default'); if !data: return
-	
 	if data is Array: data = data.pick_random()
 	
 	var asset = data.get(&'assetPath')
-	
 	if !asset: asset = splash.splashData.assetPath; if !asset: return false
 	
 	splash.image.texture = Paths.texture(asset)
 	
 	if !splash.image.texture: return false
+	
+	var offsets = splash.splashData.get(&'offsets',Vector2.ZERO)
 	match splash.splashType:
 		SplashType.NORMAL:
 			var prefix_anim = data.prefix
 			if !prefix_anim: return false
 			splash.animation.addAnimByPrefix(&'splash',prefix_anim,24.0,false)
-			splash.addAnimOffset(&'splash',data.offsets)
+			splash.addAnimOffset(&'splash',data.get(&'offsets',offsets)+SplashOffset)
 		
 		SplashType.HOLD_COVER:
 			var start_data = data.get(&'start')
@@ -96,17 +103,17 @@ static func addSplashAnimation(splash: NoteSplash,prefix: StringName):
 				if sprefix:
 					splash.animation.addAnimByPrefix(&'splash',sprefix,24.0,false)
 					splash.animation.auto_loop = true
-					splash.addAnimOffset(&'splash',start_data.offsets)
+					splash.addAnimOffset(&'splash',start_data.get(&'offsets',offsets))
 			
 			var hold_data = data.get(&'hold')
 			if hold_data:
 				var hprefix = hold_data.get(&'prefix')
 				if !hprefix: return
 				splash.animation.addAnimByPrefix(&'splash-hold',hprefix,24.0,true)
-				splash.addAnimOffset(&'splash-hold',hold_data.offsets)
+				splash.addAnimOffset(&'splash-hold',hold_data.get(&'offsets',offsets))
 		SplashType.HOLD_COVER_END:
 			var end_data = data.get(&'end')
 			if !end_data: return false
 			splash.animation.addAnimByPrefix(&'splash',end_data.prefix,24.0,false)
-			splash.addAnimOffset(&'splash',end_data.offsets)
+			splash.addAnimOffset(&'splash',end_data.get(&'offsets',offsets))
 	return true

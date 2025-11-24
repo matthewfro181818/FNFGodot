@@ -199,7 +199,6 @@ func reloadAnims():
 		addAnimOffset(animName,anims.offsets)
 		animation.setLoopFrame(animName,anims.get('loop_frame',0))
 	hasDanceAnim = has_dance_anim
-	centerOrigin()
 
 func flip_sing_animations() -> void:
 	for i in animationsArray.keys():

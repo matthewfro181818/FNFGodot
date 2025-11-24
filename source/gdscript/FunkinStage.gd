@@ -87,8 +87,8 @@ static func loadSprites(stage_json: Dictionary = json) -> void:
 		sprite.modulate.a = data.get('alpha',1.0)
 		sprites.append([data.get('zIndex',0),sprite])
 	
-	var front_index: int = NAN
-	var got_first_index: bool = false
+	var front_index: int = 0
+	var got_first_index: bool
 	
 	for chars in stage_json.get('characters',{}):
 		if !charactersGroup.has(chars): continue

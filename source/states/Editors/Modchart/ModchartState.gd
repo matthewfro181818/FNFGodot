@@ -90,13 +90,13 @@ static func _get_key_value(key: KeyInterpolator):
 static func update_key(key: KeyInterpolator):
 	var value: Variant = _get_key_value(key)
 	var obj: Object = key.object
-	if !obj: obj = FunkinGD._find_object(key.object_name); if !obj: return
+	if !obj: obj = FunkinGD.Reflect._find_object(key.object_name); if !obj: return
 	obj.set(key.property,value)
 	
 static func update_key_material(key: KeyInterpolator):
 	var value: Variant = _get_key_value(key)
 	var obj: ShaderMaterial = key.object
-	if !obj: obj = FunkinGD._find_object(key.object_name); if !obj: return
+	if !obj: obj = FunkinGD.Reflect._find_object(key.object_name); if !obj: return
 	obj.set_shader_parameter(key.property,value)
 
 static func setObjectValue(obj: Variant, prop: String, value: Variant):
@@ -105,7 +105,7 @@ static func setObjectValue(obj: Variant, prop: String, value: Variant):
 	else: obj.set(prop,value)
 
 static func getObjectValue(obj: Variant, prop: String) -> Variant:
-	if obj is String: obj = FunkinGD._find_object(obj)
+	if obj is String: obj = FunkinGD.Reflect._find_object(obj)
 	if !obj: return
 	if obj is ShaderMaterial: return obj.get_shader_parameter(prop)
 	return obj.get(prop)

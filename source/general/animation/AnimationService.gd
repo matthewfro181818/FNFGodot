@@ -4,7 +4,6 @@ const Atlas = preload("res://source/general/animation/Atlas.gd")
 const Map = preload("res://source/general/animation/Map.gd")
 
 const AnimationController = preload("res://source/general/animation/AnimationController.gd")
-const spriteSheet = preload("res://source/general/animation/spriteSheet.gd")
 const formats: PackedStringArray = ['xml','json','txt']
 
 ##Will store the created animations, containing the name and an array with its frames

@@ -89,6 +89,7 @@ func selectCurrentOption():
 	elif textSprite == "Exit Song": exit_song.emit()
 	else: return
 	_remove_pause()
+	
 func _input(event: InputEvent) -> void:
 	if !is_inside_tree(): return
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -98,8 +99,7 @@ func _input(event: InputEvent) -> void:
 			KEY_ENTER:
 				if curSection: return
 				selectCurrentOption()
-	elif event is InputEventMouseButton:
-		if !event.button_index == 1: return
+	elif event is InputEventScreenTouch:
 		if !is_scrolling and event.pressed:
 			scrolled = false
 			is_scrolling = true
@@ -109,14 +109,14 @@ func _input(event: InputEvent) -> void:
 				selectCurrentOption()
 			is_scrolling = false
 			
-	elif event is InputEventMouseMotion:
-		if is_scrolling:
-			curTextFloat += -event.relative.y/100
-			if curTextFloat <= -1:
-				curTextFloat = allTexts.size()-1
-			elif curTextFloat >= allTexts.size():
-				curTextFloat = 0
-			
-			if int(curTextFloat) != curText:
-				curText = int(curTextFloat)
-				scrolled = true
+	elif event is InputEventScreenDrag:
+		if !is_scrolling: return
+		curTextFloat += -event.relative.y/100
+		if curTextFloat <= -1:
+			curTextFloat = allTexts.size()-1
+		elif curTextFloat >= allTexts.size():
+			curTextFloat = 0
+		
+		if int(curTextFloat) != curText:
+			curText = int(curTextFloat)
+			scrolled = true

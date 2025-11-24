@@ -1,17 +1,37 @@
 @icon("res://icons/Camera2D.svg")
-class_name CameraCanvas extends Node2D
+class_name FunkinCamera extends Node2D
 #region Transform
-@export var x: float: set = set_x, get = get_x
-@export var y: float: set = set_y, get = get_y
-@export var zoom: float = 1.0: set = set_zoom
+@export var x: float:
+	set(val): position.x = val 
+	get(): return position.x
+@export var y: float: 
+	set(val): position.y = val 
+	get(): return position.y
 
+@export var zoom: float = 1.0:
+	set(val): zoom = val; _update_zoom()
 
-var color: Color: set = set_color,get = get_color
-var angle: float: set = set_angle, get = get_angle
-var angle_degrees: float: set = set_angle_degress
-var width: int: set = set_width
-var height: int: set = set_height
-var pivot_offset: Vector2 = Vector2.ZERO: set = set_pivot_offset
+var color: Color:
+	set(value): 
+		modulate.r = value.r
+		modulate.g = value.g
+		modulate.b = value.b
+	get(): return modulate
+
+var angle: float:
+	set(val): angle_degrees = deg_to_rad(val)
+	get(): return rad_to_deg(angle_degrees)
+
+var angle_degrees: float:
+	set(val): angle_degrees = val; _update_angle()
+
+var width: float:
+	set(value): width = value; _update_camera_size()
+var height: float:
+	set(value): height = value; _update_camera_size()
+
+var pivot_offset: Vector2 = Vector2.ZERO: 
+	set(val): pivot_offset = val; _update_pivot()
 #endregion
 
 #region Camera
@@ -19,10 +39,18 @@ var bg: SolidSprite = SolidSprite.new()
 var _first_index: int
 
 var scroll_camera: Node2D = Node2D.new()
-var scroll: Vector2: set = set_scroll
-var scrollOffset: Vector2: set = set_scroll_offset
-var _scroll_position: Vector2: set = _set_scroll_position
-var _scroll_pivot_offset: Vector2: set = _set_scroll_pivot_offset
+var scroll: Vector2: 
+	set(val): scroll = val; _update_scroll_pos()
+
+var scrollOffset: Vector2: 
+	set(val): scrollOffset = val; _update_scroll_pos()
+
+var _scroll_position: Vector2: 
+	set(val): _scroll_position = val; _update_pivot();
+
+var _scroll_pivot_offset: Vector2: 
+	set(val): _scroll_pivot_offset = val; _update_scroll_transform() 
+
 var _real_scroll_position: Vector2
 
 var flashSprite: FlashSprite = FlashSprite.new()
@@ -30,9 +58,13 @@ var flashSprite: FlashSprite = FlashSprite.new()
 
 #region Shake
 @export_category("Shake")
-var shakeIntensity: float = 0.0: set = _set_shake_intensity
-var shakeTime: float = 0.0
-var _shake_pos: Vector2: set = _set_shake_pos
+var shakeIntensity: float: 
+	set(val): shakeIntensity = val; _is_shaking = val; if !_is_shaking: _shake_pos = Vector2.ZERO
+
+var shakeTime: float
+var _shake_pos: Vector2:
+	set(val): _shake_pos = val; _update_scroll_transform()
+
 var _is_shaking: bool = false
 #endregion
 
@@ -65,6 +97,10 @@ func _init() -> void:
 		if node.get_index() < _first_index: _first_index -= 1
 	)
 	
+	child_entered_tree.connect(func(_n):
+		move_child.call_deferred(flashSprite,-1)
+	)
+	
 	
 	add_child(flashSprite)
 
@@ -86,30 +122,26 @@ func _update_viewport_size():
 #region Shaders Methods
 func setFilters(shaders: Array = []) -> void: ##Set Shaders in the Camera
 	removeFilters()
-	filtersArray.append_array(_convertFiltersToMaterial(shaders))
-	if !filtersArray: return
+	if !shaders: return
 	
+	shaders = _convertFiltersToMaterial(shaders)
 	create_viewport()
 	create_shader_image()
 	
-	_shader_image.material = filtersArray.back()
-	
-	if filtersArray.size() == 1: _shader_image.texture = viewport.get_texture(); return
-	
 	var index: int = 0
-	var size = filtersArray.size()-1
-	while index < size: _addViewportShader(filtersArray[index]); index += 1
+	var size = shaders.size()
+	while index < size: addFilter(shaders[index]); index += 1
 
-
-func addFilter(shader: ShaderMaterial):
+func addFilter(shader: ShaderMaterial) -> void:
 	if shader in filtersArray: return
 	create_viewport()
-	_addViewportShader(shader)
+	
+	if filtersArray: _addViewportShader(filtersArray.back())
 	filtersArray.append(shader)
 	_shader_image.material = shader
 
-func addFilters(shaders: Array) -> void: ##Add shaders to the existing ones.
-	for i in _convertFiltersToMaterial(shaders): addFilter(i)
+func addFilters(shaders: Array) -> void: for i in _convertFiltersToMaterial(shaders): addFilter(i) ##Add shaders to the existing ones.
+	
 
 func _addViewportShader(filter: ShaderMaterial) -> Sprite2D:
 	if !_last_viewport_added: return
@@ -186,7 +218,6 @@ func create_shader_image():
 	_shader_image.texture = viewport.get_texture()
 	
 	add_child(_shader_image)
-	move_child(_shader_image,0)
 
 func remove_viewport() -> void:
 	if !viewport: return
@@ -229,7 +260,7 @@ func fade(color: Variant = Color.BLACK,time: float = 1.0, _force: bool = true, _
 	else: 
 		FunkinGD.startTweenNoCheck(
 			tag,
-			flashSprite,{FunkinGD.ModulateAlpha: target},
+			flashSprite,{^"modulate:a": target},
 			time
 		)
 
@@ -239,7 +270,6 @@ func flash(color: Color = Color.WHITE, time: float = 1.0, force: bool = false) -
 	if !force and FunkinGD.isTweenRunning(tag): return
 	flashSprite.modulate = color
 	FunkinGD.doTweenAlpha(tag,flashSprite,0.0,time).bind_node = self
-
 #endregion
 
 #region Insert/Remove Nodes Methods
@@ -273,10 +303,10 @@ func _process(delta: float) -> void: if _is_shaking: _updateShake(delta)
 
 func _update_rect_visible():
 	RenderingServer.canvas_item_set_custom_rect(get_canvas_item(),true,Rect2(0,0,width,height))
-	
+
 func _update_transform() -> void:
-	_update_angle()
-	_update_zoom()
+	_update_angle(false)
+	_update_zoom(false)
 	_update_pivot()
 
 func _update_pivot() -> void:
@@ -286,21 +316,21 @@ func _update_pivot() -> void:
 	_scroll_pivot_offset = (_scroll_pivot*zoom - _scroll_pivot_cal)
 	_update_scroll_transform()
 
-func _update_angle()  -> void:
+func _update_angle(update_pivo: bool = true)  -> void:
 	if viewport: 
 		viewport.canvas_transform.x.y = -angle_degrees
 		viewport.canvas_transform.y.x = angle_degrees
 	else: scroll_camera.rotation = angle_degrees
-	_update_pivot()
+	if update_pivo: _update_pivot()
 
-func _update_zoom() -> void:
+func _update_zoom(update_pivo: bool = true) -> void:
 	if viewport: 
 		viewport.canvas_transform.x.x = zoom
 		viewport.canvas_transform.y.y = zoom
 	else: scroll_camera.scale = Vector2(zoom,zoom)
-	_update_pivot()
+	if update_pivo: _update_pivot()
 
-func _update_scroll_pos() -> void: _set_scroll_position(-scroll + scrollOffset)
+func _update_scroll_pos() -> void: _scroll_position = -scroll + scrollOffset
 
 func _update_scroll_transform():
 	_real_scroll_position = _scroll_position - _scroll_pivot_offset + _shake_pos
@@ -309,34 +339,9 @@ func _update_scroll_transform():
 #endregion
 
 #region Setters
-func set_x(_x: float) -> void: position.x = _x
-func set_y(_y: float) -> void: position.y = _y
-func set_width(value: int) -> void: width = value; _update_camera_size()
-func set_height(value: int) -> void: height = value; _update_camera_size()
-func set_zoom(value: float) -> void: zoom = value; _update_zoom()
-func set_angle(value: float) -> void: angle_degrees = deg_to_rad(value)
-func set_angle_degress(value: float): angle_degrees = value; _update_angle()
-func set_pivot_offset(value: Vector2) -> void: pivot_offset = value; _update_pivot()
-func set_scroll(val: Vector2) -> void: scroll = val; _update_scroll_pos()
-func set_scroll_offset(val: Vector2): scrollOffset = val; _update_scroll_pos()
-func _set_scroll_position(val: Vector2) -> void: _scroll_position = val; _update_pivot();
-func _set_scroll_pivot_offset(val: Vector2) -> void: _scroll_pivot_offset = val; _update_scroll_transform()
-func _set_shake_pos(val: Vector2): _shake_pos = val; _update_scroll_transform()
-func _set_shake_intensity(intensity: float): 
-	shakeIntensity = intensity
-	_is_shaking = intensity
-	if !_is_shaking: _shake_pos = Vector2.ZERO
-func set_color(_color: Variant): 
-	scroll_camera.modulate.r = _color.r; 
-	scroll_camera.modulate.g = _color.g; 
-	scroll_camera.modulate.b = _color.b
 #endregion
 
 #region Getters
-func get_x() -> float: return position.x
-func get_y() -> float: return position.y
-func get_angle() -> float: return rad_to_deg(angle_degrees)
-func get_color() -> Color: return scroll_camera.modulate
 func _property_get_revert(property: StringName) -> Variant:
 	match property:
 		'zoom': return defaultZoom

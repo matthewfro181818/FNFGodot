@@ -44,11 +44,10 @@ offset_right = 1280.0
 offset_bottom = 721.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
-current_tab = 1
+current_tab = 0
 tab_focus_mode = 0
 
 [node name="Animation Data" type="ScrollContainer" parent="TabContainer"]
-visible = false
 layout_mode = 2
 focus_mode = 2
 mouse_filter = 0
@@ -68,9 +67,13 @@ theme_override_styles/panel = ExtResource("3_fjx64")
 title = "Current Animation Data"
 
 [node name="Data" type="Label" parent="TabContainer/Animation Data/Container/Current Animation"]
-custom_minimum_size = Vector2(0, 300)
+custom_minimum_size = Vector2(0, 350)
 layout_mode = 2
 text = "
+ Add Animation:
+
+ Current Animation:
+
  Asset:
                
          
@@ -79,19 +82,55 @@ text = "
 
  Indices: "
 
+[node name="AnimationList" type="MenuButton" parent="TabContainer/Animation Data/Container/Current Animation/Data"]
+layout_mode = 0
+offset_left = 179.0
+offset_top = 50.0
+offset_right = 287.0
+offset_bottom = 74.0
+flat = false
+
+[node name="Insert Animation Name" type="LineEdit" parent="TabContainer/Animation Data/Container/Current Animation/Data"]
+layout_mode = 0
+offset_left = 140.0
+offset_top = 10.0
+offset_right = 293.0
+offset_bottom = 41.0
+focus_mode = 1
+mouse_force_pass_scroll_events = false
+placeholder_text = "Animation Name"
+
+[node name="Add Animation" type="Button" parent="TabContainer/Animation Data/Container/Current Animation/Data"]
+layout_mode = 0
+offset_left = 301.0
+offset_top = 9.0
+offset_right = 431.0
+offset_bottom = 40.0
+focus_mode = 0
+text = "Add Animation"
+
+[node name="Remove Animation" type="Button" parent="TabContainer/Animation Data/Container/Current Animation/Data"]
+layout_mode = 0
+offset_left = 440.0
+offset_top = 11.0
+offset_right = 598.0
+offset_bottom = 42.0
+focus_mode = 0
+text = "Remove Animation"
+
 [node name="AssetPath" type="LineEdit" parent="TabContainer/Animation Data/Container/Current Animation/Data"]
 layout_mode = 0
 offset_left = 70.0
-offset_top = 5.0
+offset_top = 83.0
 offset_right = 269.0
-offset_bottom = 36.0
+offset_bottom = 114.0
 
 [node name="Prefix" type="LineEdit" parent="TabContainer/Animation Data/Container/Current Animation/Data"]
 layout_mode = 0
 offset_left = 78.0
-offset_top = 61.0
+offset_top = 132.0
 offset_right = 289.0
-offset_bottom = 92.0
+offset_bottom = 163.0
 focus_mode = 1
 clear_button_enabled = true
 draw_control_chars = true
@@ -99,18 +138,18 @@ draw_control_chars = true
 [node name="PrefixList" type="MenuButton" parent="TabContainer/Animation Data/Container/Current Animation/Data"]
 layout_mode = 0
 offset_left = 301.0
-offset_top = 60.0
+offset_top = 131.0
 offset_right = 413.0
-offset_bottom = 91.0
+offset_bottom = 162.0
 text = "Prefix List"
 flat = false
 
 [node name="Indices" type="LineEdit" parent="TabContainer/Animation Data/Container/Current Animation/Data"]
 layout_mode = 0
 offset_left = 91.0
-offset_top = 121.0
+offset_top = 192.0
 offset_right = 299.0
-offset_bottom = 152.0
+offset_bottom = 223.0
 focus_mode = 1
 mouse_filter = 1
 mouse_force_pass_scroll_events = false
@@ -122,9 +161,9 @@ drag_and_drop_selection_enabled = false
 [node name="Looped" type="CheckBox" parent="TabContainer/Animation Data/Container/Current Animation/Data"]
 layout_mode = 0
 offset_left = 292.0
-offset_top = 168.0
+offset_top = 256.0
 offset_right = 378.0
-offset_bottom = 199.0
+offset_bottom = 287.0
 focus_mode = 0
 text = "Loop"
 
@@ -133,9 +172,9 @@ layout_mode = 0
 anchors_preset = 0
 anchor_bottom = 0.0
 offset_left = 10.0
-offset_top = 173.0
+offset_top = 261.0
 offset_right = 104.0
-offset_bottom = 188.0
+offset_bottom = 276.0
 text = "Loop From:"
 int_value = true
 
@@ -144,9 +183,9 @@ layout_mode = 0
 anchors_preset = 0
 anchor_bottom = 0.0
 offset_left = 11.0
-offset_top = 229.0
+offset_top = 317.0
 offset_right = 96.0
-offset_bottom = 244.0
+offset_bottom = 332.0
 text = "Offset X:"
 
 [node name="anim_offset_y" parent="TabContainer/Animation Data/Container/Current Animation/Data" instance=ExtResource("3_atq18")]
@@ -154,9 +193,9 @@ layout_mode = 0
 anchors_preset = 0
 anchor_bottom = 0.0
 offset_left = 302.0
-offset_top = 227.0
+offset_top = 315.0
 offset_right = 387.0
-offset_bottom = 242.0
+offset_bottom = 330.0
 text = "Offset Y:"
 
 [node name="FrameRate" parent="TabContainer/Animation Data/Container/Current Animation/Data" instance=ExtResource("3_atq18")]
@@ -164,69 +203,21 @@ layout_mode = 0
 anchors_preset = 0
 anchor_bottom = 0.0
 offset_left = 322.0
-offset_top = 129.0
+offset_top = 217.0
 offset_right = 360.0
-offset_bottom = 144.0
+offset_bottom = 232.0
 text = "FPS:"
 value = 24.0
-
-[node name="Animation Manager" type="FoldableContainer" parent="TabContainer/Animation Data/Container"]
-layout_mode = 2
-focus_mode = 0
-theme_override_styles/panel = ExtResource("3_fjx64")
-title = "Add / Remove Animation"
-
-[node name="Data" type="Label" parent="TabContainer/Animation Data/Container/Animation Manager"]
-custom_minimum_size = Vector2(0, 100)
-layout_mode = 2
-text = "
-Current Animation:
-
-Animation Name:"
-
-[node name="AnimationList" type="MenuButton" parent="TabContainer/Animation Data/Container/Animation Manager/Data"]
-layout_mode = 0
-offset_left = 171.0
-offset_top = 16.0
-offset_right = 279.0
-offset_bottom = 40.0
-flat = false
-
-[node name="Insert Animation Name" type="LineEdit" parent="TabContainer/Animation Data/Container/Animation Manager/Data"]
-layout_mode = 0
-offset_left = 141.0
-offset_top = 49.0
-offset_right = 294.0
-offset_bottom = 80.0
-focus_mode = 1
-mouse_force_pass_scroll_events = false
-placeholder_text = "Animation Name"
-
-[node name="Add Animation" type="Button" parent="TabContainer/Animation Data/Container/Animation Manager/Data"]
-layout_mode = 0
-offset_left = 302.0
-offset_top = 48.0
-offset_right = 432.0
-offset_bottom = 79.0
-focus_mode = 0
-text = "Add Animation"
-
-[node name="Remove Animation" type="Button" parent="TabContainer/Animation Data/Container/Animation Manager/Data"]
-layout_mode = 0
-offset_left = 440.0
-offset_top = 46.0
-offset_right = 598.0
-offset_bottom = 77.0
-focus_mode = 0
-text = "Remove Animation"
 
 [node name="Offsets" type="FoldableContainer" parent="TabContainer/Animation Data/Container"]
 layout_mode = 2
 focus_mode = 0
 theme_override_styles/panel = ExtResource("3_fjx64")
+folded = true
 title = "Offsets"
 
 [node name="Data" type="Control" parent="TabContainer/Animation Data/Container/Offsets"]
+visible = false
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 
@@ -290,6 +281,7 @@ tooltip_text = "Character backs to dance when his sing animation ends."
 text = "Dance when end"
 
 [node name="Json Data" type="ScrollContainer" parent="TabContainer"]
+visible = false
 self_modulate = Color(1, 1, 1, 0.0705882)
 layout_mode = 2
 metadata/_tab_index = 1
@@ -502,7 +494,7 @@ offset_left = 150.0
 offset_top = 115.0
 offset_right = 292.0
 offset_bottom = 146.0
-focus_mode = 0
+focus_mode = 1
 text = "Save Character"
 
 [node name="Reload Character" type="Button" parent="CharacterData"]
@@ -511,7 +503,7 @@ offset_left = 301.0
 offset_top = 115.0
 offset_right = 459.0
 offset_bottom = 146.0
-focus_mode = 0
+focus_mode = 1
 text = "Reload Character"
 
 [node name="New Character" type="Button" parent="CharacterData"]
@@ -520,7 +512,7 @@ offset_left = 2.0
 offset_top = 115.0
 offset_right = 143.0
 offset_bottom = 146.0
-focus_mode = 0
+focus_mode = 1
 text = "New Character"
 
 [node name="Load Character From File" type="Button" parent="CharacterData"]
@@ -558,6 +550,7 @@ offset_left = 154.0
 offset_top = 63.0
 offset_right = 296.0
 offset_bottom = 94.0
+focus_mode = 1
 flat = false
 
 [node name="New Character Tab" type="ColorRect" parent="CharacterData"]
@@ -642,26 +635,27 @@ offset_left = 94.0
 offset_top = 9.0
 offset_right = 254.0
 offset_bottom = 38.0
+focus_mode = 1
 flat = false
 script = ExtResource("4_6y1bd")
 dir_to_look = "characters"
 metadata/_custom_type_script = "uid://cvvli26q7wviq"
 
+[connection signal="text_submitted" from="TabContainer/Animation Data/Container/Current Animation/Data/Insert Animation Name" to="TabContainer/Animation Data/Container/Current Animation/Data/Insert Animation Name" method="release_focus"]
+[connection signal="button_up" from="TabContainer/Animation Data/Container/Current Animation/Data/Add Animation" to="." method="_on_add_animation_button_up"]
+[connection signal="button_up" from="TabContainer/Animation Data/Container/Current Animation/Data/Remove Animation" to="." method="_on_remove_animation_button_up"]
 [connection signal="text_submitted" from="TabContainer/Animation Data/Container/Current Animation/Data/AssetPath" to="." method="_on_asset_path_text_submitted"]
 [connection signal="text_submitted" from="TabContainer/Animation Data/Container/Current Animation/Data/Prefix" to="." method="reloadCharacterAnim" unbinds=1]
 [connection signal="text_submitted" from="TabContainer/Animation Data/Container/Current Animation/Data/Prefix" to="." method="set_anim_data_value" binds= [&"prefix"]]
 [connection signal="text_submitted" from="TabContainer/Animation Data/Container/Current Animation/Data/Indices" to="." method="_on_indices_text_submitted"]
 [connection signal="toggled" from="TabContainer/Animation Data/Container/Current Animation/Data/Looped" to="." method="replayCharAnim" unbinds=1]
-[connection signal="toggled" from="TabContainer/Animation Data/Container/Current Animation/Data/Looped" to="." method="set_character_animation_value" binds= [&"looped"]]
 [connection signal="toggled" from="TabContainer/Animation Data/Container/Current Animation/Data/Looped" to="." method="set_anim_data_value" binds= [&"looped"]]
+[connection signal="toggled" from="TabContainer/Animation Data/Container/Current Animation/Data/Looped" to="." method="set_character_animation_value" binds= [&"looped"]]
 [connection signal="value_changed" from="TabContainer/Animation Data/Container/Current Animation/Data/LoopFrom" to="." method="_on_loop_from_value_changed"]
 [connection signal="value_changed" from="TabContainer/Animation Data/Container/Current Animation/Data/anim_offset_x" to="." method="_on_anim_offset_x_value_changed"]
 [connection signal="value_changed" from="TabContainer/Animation Data/Container/Current Animation/Data/anim_offset_y" to="." method="_on_anim_offset_y_value_changed"]
-[connection signal="value_changed" from="TabContainer/Animation Data/Container/Current Animation/Data/FrameRate" to="." method="set_character_animation_value" binds= [&"frameRate"]]
 [connection signal="value_changed" from="TabContainer/Animation Data/Container/Current Animation/Data/FrameRate" to="." method="set_anim_data_value" binds= [&"fps"]]
-[connection signal="text_submitted" from="TabContainer/Animation Data/Container/Animation Manager/Data/Insert Animation Name" to="TabContainer/Animation Data/Container/Animation Manager/Data/Insert Animation Name" method="release_focus"]
-[connection signal="button_up" from="TabContainer/Animation Data/Container/Animation Manager/Data/Add Animation" to="." method="_on_add_animation_button_up"]
-[connection signal="button_up" from="TabContainer/Animation Data/Container/Animation Manager/Data/Remove Animation" to="." method="_on_remove_animation_button_up"]
+[connection signal="value_changed" from="TabContainer/Animation Data/Container/Current Animation/Data/FrameRate" to="." method="set_character_animation_value" binds= [&"frameRate"]]
 [connection signal="toggled" from="TabContainer/Animation Data/Container/Offsets/Data/Offset Follow Flip" to="." method="_on_offset_follow_flip_toggled"]
 [connection signal="toggled" from="TabContainer/Animation Data/Container/Offsets/Data/Offset Follow Scale" to="." method="_on_offset_follow_scale_toggled"]
 [connection signal="toggled" from="TabContainer/Animation Data/Container/Sing_Dance/Data/Sing Animation Follow Flip" to="." method="_on_flip_sing_direction_toggled"]

@@ -100,12 +100,13 @@ func start_process():
 		
 static func getObjectCopy(object) -> Node:
 	if !object:return
-	if !object is FunkinSprite:return object.duplicate()
+	if !object is FunkinSprite: return object.duplicate()
 	
 	if !object.image or !object.animation or !object.animation.curAnim.node_to_animate: return
 	var trail = (object.animation.curAnim.node_to_animate if object.animation else object.image).duplicate()
 	trail._frame_offset += object.position
 	trail.scale += object.scale - Vector2.ONE
+	trail.pivot_offset = object.pivot_offset
 	trail.rotation += object.rotation
 	return trail
 
@@ -128,6 +129,7 @@ func createTrail() -> Node:
 	object.add_sibling(trail)
 	object.get_parent().move_child(trail,object.get_index())
 	return trail
+
 func eraseTrails():
 	for trail in trails:
 		trail.queue_free()

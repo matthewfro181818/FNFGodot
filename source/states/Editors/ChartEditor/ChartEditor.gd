@@ -56,6 +56,7 @@ func _load_song_data():
 	set_opponent(Conductor.songJson.player1)
 	set_player(Conductor.songJson.player2)
 	keyCount = Conductor.songJson.get('keyCount',4)
+
 func _connect_popups():
 	bf_characters_popup.index_pressed.connect(func(i): var t = bf_characters_popup.get_item_text(i); set_player(t))
 	dad_characters_popup.index_pressed.connect(func(i): var t = dad_characters_popup.get_item_text(i); set_opponent(t))

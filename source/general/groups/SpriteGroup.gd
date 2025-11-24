@@ -31,7 +31,7 @@ var camera: Node:
 		if camera: camera.remove_child(self)
 		camera = cam
 		if !cam: return
-		if cam is CameraCanvas: cam.add(self)
+		if cam is FunkinCamera: cam.add(self)
 		else: cam.add_child(self)
 		_parent_camera = cam
 	

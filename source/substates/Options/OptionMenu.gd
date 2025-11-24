@@ -1,5 +1,5 @@
 extends Node2D
-const FunkinText = preload("res://source/objects/AlphabetText/AlphabetText.gd")
+const AlphabetText = preload("res://source/objects/AlphabetText/AlphabetText.gd")
 const FunkinCheckBox = preload("res://source/states/Menu/CheckBoxSprite.gd")
 const NumberRange = preload("res://source/substates/Options/NumberRange.gd")
 const TextRange = preload("res://source/substates/Options/NumberRangeKeys.gd")
@@ -32,7 +32,7 @@ func loadInterators():
 		var pos = Vector2(20,50 + 120*index)
 		var data = data[index]
 		
-		var text_n = FunkinText.new()
+		var text_n = AlphabetText.new()
 		text_n.scale = Vector2(0.8,0.8)
 		var obj = data.get(&'object')
 		var value_type: int = TYPE_NIL
@@ -67,7 +67,7 @@ func _input(event: InputEvent) -> void:
 			KEY_UP: optionIndex -= 1
 			KEY_DOWN: optionIndex += 1
 
-static func createOptionInterator(option_data: Dictionary, value: Variant, at: FunkinText = null) -> Node:
+static func createOptionInterator(option_data: Dictionary, value: Variant, at: AlphabetText = null) -> Node:
 	var object
 	var pos = Vector2.ZERO
 	var value_options = option_data.get('options')

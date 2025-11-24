@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://c1k1eekupm5vi"]
-
-[ext_resource type="Script" uid="uid://cdoa5o31lll0v" path="res://source/substates/online_match.gd" id="1_kauyp"]
-
-[node name="Online Match" type="Node2D"]
-script = ExtResource("1_kauyp")

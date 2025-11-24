@@ -23,8 +23,7 @@ func _start_clients():
 	ClientPrefs._init()
 	ScreenUtils._init()
 
-func _ready() -> void:
-	scene = get_parent()
+func _ready() -> void: scene = get_parent()
 
 ##Swap the Tree for a new [Node]. [br][br]
 ##[param newTree] can be a [Node], [PackedScene] or [GDScript].
@@ -86,12 +85,7 @@ func show_label_warning(text: Variant, time: float = 2.0, width: float = ScreenU
 	label.add_child(timer)
 	add_child(label)
 	timer.start(time)
-	timer.timeout.connect(func():
-		label.create_tween().tween_property(label,'modulate:a',0,2).finished.connect(func():
-			error_prints.erase(label)
-			label.queue_free()
-		)
-	)
+	timer.timeout.connect(_label_timer_finished.bind(label))
 	label.set('theme_override_constants/outline_size',10)
 	label.position.x = ScreenUtils.screenCenter.x - label.size.x/2.0
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -99,4 +93,8 @@ func show_label_warning(text: Variant, time: float = 2.0, width: float = ScreenU
 	label.z_index = 1
 	error_prints.append(label)
 	return label
-		
+
+func _label_timer_finished(label: Label):
+	var tween = label.create_tween().tween_property(label,'modulate:a',0,2)
+	tween.finished.connect(label.queue_free)
+	tween.finished.connect(func(): error_prints.erase(label))

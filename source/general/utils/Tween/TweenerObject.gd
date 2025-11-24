@@ -2,7 +2,7 @@ extends "res://source/general/utils/Tween/Tweener.gd"
 
 ##Properties that will be tweened. 
 ##[br]That contains [code]{"property_name": [init_value,final_value,final_value - init_value]}[/code].
-var properties: Dictionary = {} 
+var properties: Dictionary
 
 var object: Object  ##Object that will be tweened. Can be a [Object] or a [ShaderMaterial].
 

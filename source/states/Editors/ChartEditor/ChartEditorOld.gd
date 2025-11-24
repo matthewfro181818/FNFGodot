@@ -355,7 +355,6 @@ func createChart() -> void:
 	Song.songName = new_song_name
 	
 	Conductor.songJson = new_json
-	Conductor.setSongBpm(new_chart_bpm.value)
 	
 	Conductor.loadedSong()
 	
@@ -384,9 +383,6 @@ func changeBpm(to: float = new_bpm_value.value) -> void:
 		curSectionData.changeBPM = true
 		curSectionData.bpm = to
 	updateBpm()
-
-func changeSongBpm(to: float) -> void: Conductor.setSongBpm(to)
-
 #endregion
 
 #region Editor Methods

@@ -1,5 +1,6 @@
 class_name DictionaryUtils
 
+const EmptyDict: Dictionary = {}
 static func merge_existing(dic: Dictionary, to: Dictionary) -> Dictionary:
 	for i in dic:
 		if to.has(i):

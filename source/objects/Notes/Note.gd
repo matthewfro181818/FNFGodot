@@ -10,6 +10,14 @@ const StrumNote = preload("res://source/objects/Notes/StrumNote.gd")
 const _rating_string: Array = [&'marvellous',&'sick',&'good',&'bad',&'shit']
 const _ratings_length: int = 4 #_rating_string.size()
 
+const key_actions: Array = [
+	[&""],
+	[&"note_left"],
+	[&"note_left",&"note_right"],
+	[&"note_left",&"note_center",&"note_right"],
+	[&"note_left",&"note_down",&"note_up",&"note_right"],
+	[&"note_left",&"note_down",&"note_center",&"note_up",&"note_right"],
+]
 
 #endregion
 
@@ -17,14 +25,13 @@ const _ratings_length: int = 4 #_rating_string.size()
 static var _rating_offset: Array[float] = [-1.0,45.0,130.0,150.0]
 static var noteStylesLoaded: Dictionary
 static var miraculousRating: bool
-
-
 #endregion
 
 #region Copy Strum Vars
 var copyX: bool = true  ##If [code]true[/code], the note will follow the x position from his [member strum].
 var copyY: bool = true ##If [code]true[/code], the note will follow the y position from his [member strum].
 var copyAlpha: bool = true ##If [code]true[/code], the note will follow the alpha from his [member strum].
+var copyScale: bool ##If [code]true[/code], the note will follow the scale from his [member strum].
 #endregion
 
 var _is_processing: bool = true
@@ -51,7 +58,7 @@ var strumNote: StrumNote: set = setStrum ##Strum Parent that note will follow
 var noteSpeed: float = 1.0: set = setNoteSpeed ##Note Speed
 var _real_note_speed: float = 1.0
 
-var animSuffix: StringName
+var animSuffix: String
 #endregion
 
 #region Note Type Variables
@@ -123,14 +130,12 @@ func _exit_tree() -> void: if strumNote: strumNote.mult_speed_changed.disconnect
 
 func _init(data: int = 0) -> void:
 	noteData = data
-	_update_note_speed()
 	super._init()
 
 func updateNote() -> void:
 	distance = (strumTime - Conductor.songPositionDelayed)
 	_check_hit()
 	followStrum()
-
 
 func _check_hit() -> void:
 	if blockHit: canBeHit = false; return
@@ -152,6 +157,27 @@ func followStrum(strum: StrumNote = strumNote) -> void:
 	if copyY: y = posY
 	if copyAlpha: modulate.a = strumNote.modulate.a * multAlpha
 
+func reloadNote() -> void:
+	var dir = directions[noteData]
+	
+	noteScale = styleData.get(&'scale',NoteStyleData.DEFAULT_NOTES_SCALE)
+	var data = styleData.data.get(dir)
+	if data:
+		if !data.prefix: return
+		animation.addAnimByPrefix(&'static', data.prefix,data.get(&'fps',24.0),true)
+		noteScale = data.get(&'scale',noteScale)
+	else: _reload_note_without_data()
+	setGraphicScale(Vector2(noteScale,noteScale))
+
+func _reload_note_without_data():
+	var cut = imageSize/Vector2(Song.keyCount,5)
+	setNoteRect(
+		Rect2(
+			Vector2(cut.x*noteData,cut.y),
+			cut
+		)
+	)
+
 func resetNote() -> void: ##Reset Note values when spawned.
 	judgementTime = INF
 	wasHit = false
@@ -160,6 +186,7 @@ func resetNote() -> void: ##Reset Note values when spawned.
 	offset = Vector2.ZERO
 	noteGroup = null
 	material = null
+	ignoreNote = false
 
 func killNote() -> void: ##Delete the note from the scene.
 	_is_processing = false
@@ -170,16 +197,15 @@ func _update_distance() -> void: real_distance = distance*_real_note_speed
 
 func _update_note_speed() -> void: 
 	_real_note_speed = noteSpeed * 0.45 * multSpeed
-	if strumNote: _real_note_speed *= strumNote.multSpeed
+	if strumNote: _real_note_speed *= (-strumNote.multSpeed) if strumNote.downscroll else strumNote.multSpeed
 
 #endregion
 
 #region Setters
 func loadFromStyle(noteStyle: String, prefix: String = stylePrefix) -> void:
 	super.loadFromStyle(noteStyle,prefix)
-	if !styleData: offsetX = 0.0; offsetY = 0.0; return
-	var offsets = styleData.offsets
-	if offsets: offsetX = offsets[0]; offsetY = offsets[1]
+	var offsets = styleData.get(&'offsets',Vector2.ZERO)
+	offsetX = offsets.x; offsetY = offsets.y
 
 func setNoteSpeed(_speed: float) -> void:
 	if noteSpeed == _speed: return
@@ -201,16 +227,4 @@ func setStrum(strum: StrumNote) -> void:
 	if strumNote and in_tree: strumNote.mult_speed_changed.disconnect(_update_note_speed)
 	strumNote = strum
 	if in_tree: strum.mult_speed_changed.connect(_update_note_speed); _update_note_speed()
-#endregion
-
-#region Getters
-#region Static Funcs
-##Return the closer note from his [member Note.strumNote]
-static func detectCloseNote(array: Array):
-	if !array:return null
-	var closeNote = array.pop_front()
-	for i in array:
-		if not i: continue
-		if absf(i.distance) < absf(closeNote.distance): closeNote = i 
-	return closeNote
 #endregion

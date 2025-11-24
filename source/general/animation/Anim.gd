@@ -4,18 +4,16 @@
 ##[Sprite2D] with [member Sprite2D.region_rect] = [code]true[/code].
 extends Resource
 
-const AnimationService = preload("res://source/general/animation/AnimationService.gd")
-const _AnimationController = preload("res://source/general/animation/AnimationController.gd")
-const _sprite_sheet = preload("res://source/general/animation/spriteSheet.gd")
+const AnimationService = preload("uid://baqi8x2akrmfp")
+const _AnimationController = preload("uid://br8wh5do7l62w")
+const region_pos_path = ^"region_rect:position"
 
-const region_pos_path = NodePath("region_rect:position")
-
-var animationsArray: Dictionary[StringName,Dictionary] = {} ##Stores the dates of created animations. See also [method insertAnim].
+var animationsArray: Dictionary[StringName,Dictionary] ##Stores the dates of created animations. See also [method insertAnim].
 
 ##Contains the data of the animation [code]name, curFrame, prefix...[/code]
 @export var curAnim: _AnimationController = _AnimationController.new()
 
-var _animFile: StringName = ''
+var _animFile: StringName
 
 ##Set the image that will be animated. Can be a [Sprite2D] or a [Sprite3D]
 ##with [param region_enabled] equals a [code]true[/code].[br][br]
@@ -23,13 +21,13 @@ var _animFile: StringName = ''
 ##Call [Node.add_child] before set.
 var image: CanvasItem: set = set_image
 
-var _midpoint_set: bool = false
+var _midpoint_set: bool
 
-var image_parent: Node = null
+var image_parent: Node
 
-var animations_use_textures: bool = false
+var animations_use_textures: bool 
 
-var prefix: StringName = '' ##The current animation name in the sparrow
+var prefix: StringName ##The current animation name in the sparrow
 
 ##Returns the xml frame being played.
 var frameName: StringName: get = get_frame_name
@@ -69,7 +67,7 @@ func can_play(anim: StringName, force: bool = false) -> bool:
 ##Returns [code]true[/code] if the animation starts.[br][br]
 ##If [param force] is [code]true[/code], the animation will be forced to restart if already playing.[br]
 ##See also [method play_reverse].
-func play(anim: StringName, force: bool = false) -> bool:
+func play(anim: StringName = current_animation, force: bool = false) -> bool:
 	if !can_play(anim,force): return false
 	if anim != current_animation: update_anim(anim)
 	curAnim.play()
@@ -78,12 +76,11 @@ func play(anim: StringName, force: bool = false) -> bool:
 
 func play_random(force: bool = false):
 	if !animationsArray: return
-	var keys = animationsArray.keys()
-	play(keys[randi_range(0, keys.size() - 1)], force)
+	play(animationsArray.keys().pick_random(), force)
 
 func play_reverse(anim: StringName, force: bool = false) -> void: ##Plays the animation from end to beggining. See also [method play]
 	if !can_play(anim,force): return
-	update_anim(anim)
+	if anim != current_animation: update_anim(anim)
 	curAnim.play_reverse()
 	animation_started.emit(anim)
 	
@@ -100,9 +97,7 @@ func getAnimData(animName: StringName) -> Dictionary: return animationsArray.get
 ##[b]OBS:[/b] If the [param animName] as the same from the current animation,
 ##use [method update_anim] to update the property changed.
 func setAnimDataValue(animName: String, property: StringName, value: Variant):
-	var data = animationsArray.get(animName)
-	if !data: return
-	data[property] = value
+	var data = animationsArray.get(animName); if data: data[property] = value
 
 func update_anim(anim: StringName = current_animation):
 	var animData = animationsArray[anim]
@@ -124,7 +119,7 @@ func update_anim(anim: StringName = current_animation):
 ##animation.addAnimByPrefix('indices_array','prefix',24.0,false,[0,1,2,5,6]) #Using Array
 ##animation.addAnimByPrefix('indices_string','prefix',24,false,"0,1,2,3,4,5") #Using String
 ##[/codeblock]
-func addAnimByPrefix(animName: StringName, prefix: StringName, fps: float = 24.0, loop: bool = false, indices: Variant = []) -> Dictionary:
+func addAnimByPrefix(animName: StringName, prefix: StringName, fps: float = 24.0, loop: bool = false, indices: PackedInt32Array = PackedInt32Array()) -> Dictionary:
 	var anim_frames = getFramesFromPrefix(prefix,indices)
 	if !anim_frames: return {}
 	var anim_data: Dictionary[StringName, Variant] = {
@@ -136,7 +131,7 @@ func addAnimByPrefix(animName: StringName, prefix: StringName, fps: float = 24.0
 	insertAnim(animName,anim_data)
 	return anim_data
 
-func getFramesFromPrefix(prefix: StringName, indices: Variant = PackedInt32Array(), animation_file: String = _animFile) -> Array:
+func getFramesFromPrefix(prefix: StringName, indices: Variant = PackedInt32Array(), animation_file: StringName = _animFile) -> Array:
 	if indices is String: indices = get_indices_by_str(indices)
 	if !indices: return AnimationService.getAnimFrames(prefix,animation_file)
 	return AnimationService.getAnimFramesIndices(prefix,animation_file,indices)
@@ -145,7 +140,7 @@ func addAnimation(animName: StringName, frames: Array, fps: float = 24.0, loop: 
 	if !frames: return {}
 	return insertAnim(
 		animName,
-		{'looped': loop,'fps': fps,'frames': frames}
+		{&'looped': loop,&'fps': fps,&'frames': frames}
 	)
 
 
@@ -170,7 +165,7 @@ func addFrameAnim(animName: StringName, indices: PackedInt32Array = [], fps: flo
 		var frameX = offset.x*i
 		var frameY = int(frameX/tex_size.x)
 		if frameY: frameX -= (tex_size.x*frameY)
-		animData.frames.append({'region_rect': Rect2(Vector2(frameX,frameY*offset.y),offset)})
+		animData.frames.append({&'region_rect': Rect2(Vector2(frameX,frameY*offset.y),offset)})
 	animData.frames[0].size = offset
 	if !_midpoint_set: _set_midpoint(offset)
 	return insertAnim(animName,animData)
@@ -180,8 +175,7 @@ func addFrameAnim(animName: StringName, indices: PackedInt32Array = [], fps: flo
 ##If was no animation playing, the animation inserted will be played automatically.[br][br]
 ##See also [method addAnimation] and [method addFrameAnim].
 func insertAnim(animName: StringName, animData: Dictionary[StringName,Variant] = {}) -> Dictionary:
-	if !animData: return {}
-	if !animData.get(&'frames'): return animData
+	if !animData or !animData.get(&'frames'): return {}
 	animData.merge(getAnimBaseData(),false)
 	
 	if !_midpoint_set: update_midpoint_from_frame(animData.frames[0])
@@ -192,7 +186,7 @@ func insertAnim(animName: StringName, animData: Dictionary[StringName,Variant] =
 	if !current_animation: play(animName)
 	elif animName == current_animation: update_anim(animName); play(animName,true); 
 	
-	if animations_use_textures and !animData.get('asset'): animData.asset = image.texture
+	if animations_use_textures and !animData.get(&'asset'): animData.asset = image.texture
 	animation_added.emit(animName)
 	return animData
 #endregion
@@ -209,8 +203,8 @@ func removeAnimation(anim_name: StringName) -> void: animationsArray.erase(anim_
 func _set_midpoint(size: Vector2):
 	if _midpoint_set or size == Vector2.ZERO: return
 	size /= 2.0
-	image.set('pivot_offset',size)
-	if image_parent: image_parent.set('pivot_offset',size)
+	image.set(&'pivot_offset',size)
+	if image_parent: image_parent.set(&'pivot_offset',size)
 	_midpoint_set = true
 
 #region Library Methods
@@ -224,21 +218,22 @@ func clearLibrary() -> void: stop(); animationsArray.clear(); _midpoint_set = fa
 #endregion
 
 func update_midpoint_from_frame(frame: Dictionary) -> void:
-	var size = frame.get('frameSize')
-	if !size: size = frame.get('size')
-	if size: _set_midpoint(size)
-	else: return
+	var size = frame.get(&'frameSize')
+	
+	if !size: size = frame.get(&'size'); if !size: return
+	
+	_set_midpoint(size)
 
 func setup_animation_textures() -> void:
 	if animations_use_textures: return
 	animations_use_textures = true
-	for i in animationsArray.values(): if !i.get('asset'): i.asset = image.texture
+	for i in animationsArray.values(): if !i.get(&'asset'): i.asset = image.texture
 	image_animation_enabled.emit(true)
 
 
 ##Set the texture of a specific animation.
 ##When the [param anim_name] is played, the [member image] will change his texture to [param _texture].
-func setImageAnimation(anim_name: String, _texture: Texture2D) -> void:
+func setImageAnimation(anim_name: StringName, _texture: Texture2D) -> void:
 	var anim_data = animationsArray.get(anim_name)
 	if !anim_data: return
 	if _texture and image and image.texture and image.texture.resource_name == _texture.resource_name: return
@@ -296,21 +291,21 @@ static func get_indices_by_str(indices: String) -> PackedInt32Array:
 
 
 static func adjustAnimationFramesToNode(anim_data: Array, node: Object) -> Array:
-	var has_offset = node.get('_frame_offset') != null
-	var has_angle = node.get('_frame_angle') != null
+	var has_offset = node.get(&'_frame_offset') != null
+	var has_angle = node.get(&'_frame_angle') != null
 	
 	if not has_offset and not has_angle: return anim_data
 	
 	anim_data = anim_data.duplicate()
 	for frame in anim_data:
 		if has_offset:
-			var _position = frame.get('position')
+			var _position = frame.get(&'position')
 			if _position != null:
 				frame._frame_offset = _position
-				frame.erase('position')
+				frame.erase(&'position')
 		
 		if has_angle:
-			var _rotation = frame.get('rotation')
+			var _rotation = frame.get(&'rotation')
 			if _rotation != null:
 				frame._frame_angle = _rotation
 				frame.erase('rotation')

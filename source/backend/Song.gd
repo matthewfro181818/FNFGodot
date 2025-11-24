@@ -193,8 +193,7 @@ static func _convert_notes_to_new(notes_data: Array):
 		
 		section_data.clear()
 		section_data.assign(new_notes)
-	
-		
+
 static func sort_song_notes(song_notes: Array) -> void:
 	for i in song_notes:
 		if i.sectionNotes: i.sectionNotes.sort_custom(ArrayUtils.sort_array_from_first_index)

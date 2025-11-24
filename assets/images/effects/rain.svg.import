@@ -2,16 +2,17 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bqu6mtsttanlo"
-path="res://.godot/imported/OIP.png-5c047f194851318265a977ba68f7774c.ctex"
+uid="uid://c0ay7e7cn127n"
+path="res://.godot/imported/rain.svg-63bbc29994950015c2feeb8cba63b6ea.ctex"
 metadata={
+"has_editor_variant": true,
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/images/OIP.png"
-dest_files=["res://.godot/imported/OIP.png-5c047f194851318265a977ba68f7774c.ctex"]
+source_file="res://assets/images/effects/rain.svg"
+dest_files=["res://.godot/imported/rain.svg-63bbc29994950015c2feeb8cba63b6ea.ctex"]
 
 [params]
 
@@ -38,3 +39,6 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=0
+svg/scale=3.0
+editor/scale_with_editor_scale=false
+editor/convert_colors_with_editor_theme=true

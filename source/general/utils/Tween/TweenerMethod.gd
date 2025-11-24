@@ -1,4 +1,4 @@
-extends "res://source/general/utils/Tween/Tweener.gd"
+extends "Tweener.gd"
 var init_val: Variant
 var value: Variant
 var callable: Callable
@@ -22,5 +22,6 @@ func _init(
 
 
 func _update() -> void:
+	if !callable.get_object(): stop(); return
 	if step >= duration: callable.call(value); return
 	callable.call(Tween.interpolate_value(init_val,_sub,step,duration,transition,ease))

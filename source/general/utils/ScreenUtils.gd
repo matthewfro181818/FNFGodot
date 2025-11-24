@@ -1,8 +1,8 @@
 class_name ScreenUtils
 
-static var screenWidth: int:
+static var screenWidth: float:
 	get(): return screenSize.x
-static var screenHeight: int:
+static var screenHeight: float:
 	get(): return screenSize.y
 
 static var screenSize: Vector2 = DisplayServer.window_get_size()

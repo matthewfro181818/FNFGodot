@@ -24,7 +24,7 @@ static var searchAllMods: bool:
 	set(value): searchAllMods = value; updateDirectories()
 
 static var modsFounded: Dictionary[String,Dictionary] 
-static var modsEnabled: PackedStringArray = []
+static var modsEnabled: PackedStringArray
 
 static var enableMods: bool = true:
 	set(value):
@@ -65,9 +65,14 @@ const icons_dirs: PackedStringArray = ['icons/','icons/icon-','winning_icons/','
 const data_dirs: PackedStringArray = ['data/','data/songs/']
 #endregion
 
+#region Paths Cache
+static var _files_directories_cache: Dictionary[StringName,String]
+static var _dir_exists_cache: Dictionary[StringName,DirAccess]
+
+static var _images_paths_cache: Dictionary[StringName,String]
+static var _icons_paths_cache: Dictionary[StringName, String]
+#endregion
 #region Caches
-static var _files_directories_cache: Dictionary[String,String]
-static var _dir_exists_cache: Dictionary[String,DirAccess]
 
 static var textFiles: Dictionary
 static var fontFiles: Dictionary
@@ -103,17 +108,19 @@ static func _init() -> void:
 	modsEnabled = getRunningMods()
 	updateDirectories()
 
-static func detectFileFolder(path: String, case_sensive: bool = false) -> String:
+static func detectFileFolder(path: StringName, case_sensive: bool = false) -> String:
 	var path_cache = _files_directories_cache.get(path)
 	if path_cache: return path_cache
+	
+	var path_string: String = String(path)
 	if case_sensive: return _detect_file_folder_case_sensive(path)
 	
-	if FileAccess.file_exists(path): 
+	if FileAccess.file_exists(path_string): 
 		_files_directories_cache[path] = path
 		return path
 	
 	for d in dirsToSearch:
-		var curPath: String = _get_file_path(d+path)
+		var curPath: String = _get_file_path(d+path_string)
 		if !curPath: continue
 		_files_directories_cache[path] = curPath
 		return curPath
@@ -136,7 +143,18 @@ static func _detect_file_folder_case_sensive(path: String) -> String:
 	return ''
 
 #region Path File Methods
-static func font(path: String) -> Font:
+static func loadFile(path: StringName) -> Resource:
+	path = detectFileFolder(path)
+	if !path: return null
+	match path.get_extension():
+		'png','jpg': return ImageTexture.create_from_image(Image.load_from_file(path))
+		'svg': 
+			var _image = Image.new()
+			if _image.load_svg_from_string(path,2.0):return ImageTexture.create_from_image(_image)
+			return null
+	return ResourceLoader.load(path,"",ResourceLoader.CACHE_MODE_IGNORE)
+
+static func font(path: StringName) -> Font:
 	var font_file = fontFiles.get(path)
 	if font_file: return font_file
 	var fontPath = fontPath(path)
@@ -145,40 +163,37 @@ static func font(path: String) -> Font:
 	font_file.load_dynamic_font(fontPath)
 	return font_file
 
-static func image(path: String,imagesDirectory: bool = true) -> Image:
-	return _image_no_path_check(imagePath(path,imagesDirectory))
+static func image(path: StringName,imagesDirectory: bool = true, format: String = '.png') -> Image:
+	path = imagePath(path,imagesDirectory,format)
+	return _image_no_path_check(path) if path else null
 
-static func _image_no_path_check(path_absolute: String) -> Image:
-	if !path_absolute: return null
+static func _image_no_path_check(path_absolute: StringName) -> Image:
 	if imagesCreated.has(path_absolute): return imagesCreated[path_absolute]
-	
 	var imageFile: Image = Image.load_from_file(path_absolute)
-	imageFile.resource_name = path_absolute.left(-4)
+	imageFile.resource_name = path_absolute.get_basename()
 	imagesCreated[path_absolute] = imageFile
 	return imageFile
-	
-static func texture(path: String, imagesDirectory: bool = true) -> ImageTexture:
-	path = imagePath(path,imagesDirectory)
-	if !path: return
-	return _texture_no_check(path)
 
-static func _texture_no_check(path_absolute: String) -> Texture:
+static func texture(path: StringName, imagesDirectory: bool = true, format: String = '.png') -> ImageTexture:
+	path = imagePath(path,imagesDirectory,format)
+	return _texture_no_check(path) if path else null
+
+static func _texture_no_check(path_absolute: StringName) -> Texture:
 	if imagesTextures.has(path_absolute): return imagesTextures[path_absolute]
 	var image = _image_no_path_check(path_absolute)
+	if !image: return null
 	var texture = ImageTexture.create_from_image(image)
 	texture.resource_name = image.resource_name
 	imagesTextures[path_absolute] = texture
 	return texture
 	
-static func icon(path: String) -> Texture:
-	var _icon_path = iconPath(path)
-	if !_icon_path: return
-	return _texture_no_check(_icon_path)
+static func icon(icon_name: String) -> Texture:
+	var _icon_path = iconPath(icon_name)
+	return _texture_no_check(_icon_path) if _icon_path else null
 
 static func video(path: String) -> VideoStreamTheora: ##Get the [param video] path
 	if !path.ends_with('.ogv'): path += '.ogv'
-	
-	if path in videosCreated: return videosCreated[path]
+	if videosCreated.has(path): return videosCreated[path]
 	
 	var video_path = 'videos/'+path
 	var path_absolute = detectFileFolder(video_path)
@@ -231,12 +246,18 @@ static func music(path: String) -> AudioStreamOggVorbis:
 #endregion
 
 #region Path Methods
-static func imagePath(path: String, imagesDirectory: bool = true) -> String:
-	path = getPath(path,false)
+static func imagePath(path: StringName, imagesDirectory: bool = true, format: String = '.png') -> String:
+	var p = _images_paths_cache.get(path)
+	if p: return p
+	p = getPath(path,false)
 	
-	if !path.ends_with('.png'): path += '.png'
-	if imagesDirectory and not path.begins_with('images/'): path = 'images/'+path
-	return detectFileFolder(path)
+	if !format.begins_with('.'): format = '.'+format
+	
+	if !p.ends_with(format): p += format
+	if imagesDirectory and !p.begins_with('images/'): p = 'images/'+p
+	p = detectFileFolder(p)
+	_images_paths_cache[path] = p
+	return p
 
 static func text(path: String) -> String:
 	if not path.ends_with('.txt'): path += '.txt'
@@ -254,17 +275,16 @@ static func fontPath(path: String) -> String:
 	if !fontPath:
 		fontPath = 'res://assets/fonts/'+path
 		if not FileAccess.file_exists(fontPath): return ''
-	return detectFileFolder('fonts/'+path)
+	return fontPath
 	
 static func stage(path: String)-> String: return detectFileFolder('stages/'+path+'.json')
-
 static func event(path: String) -> String: return detectFileFolder('custom_events/'+path+'.gd')
 
 static func characterPath(path: String) -> String:
 	if !path.ends_with('.json'): path += '.json'
 	return detectFileFolder('characters/'+path)
 
-static func songPath(path):
+static func songPath(path: String):
 	path = getPath(path)
 	if !path.begins_with('songs/'): path = 'songs/'+path
 	if !path.get_extension(): path += '.ogg'
@@ -299,7 +319,6 @@ static func data(json: String = '',prefix: String = '',folder: String = '') -> S
 	
 	paths_to_lock.append(json_path+'-chart.json')
 	
-	
 	var contain_space = json_path.contains(' ')
 	
 	for i in paths_to_lock:
@@ -313,23 +332,13 @@ static func data(json: String = '',prefix: String = '',folder: String = '') -> S
 		for d in data_dirs: path_found = detectFileFolder(d+i); if path_found: return path_found
 	return ''
 
-static func iconPath(path: String) -> String:
-	for iconPath in icons_dirs: var icon = imagePath(iconPath+path); if icon: return icon
-	return ''
-
-
-static func model(path: String) -> Node3D:
-	if path in modelsCreated: return modelsCreated[path]
+static func iconPath(icon_name: StringName) -> StringName:
+	var path = _icons_paths_cache.get(icon_name)
+	if path: return path
 	
-	for formats in model_formats:
-		var modelPath = detectFileFolder(path+formats)
-		if modelPath:
-			var model = load(modelPath)
-			if formats == '.tres': pass
-			modelsCreated[path] = model
-			return model
-	modelsCreated[path] = null
-	return null
+	var icon_string = String(icon_name)
+	for iconPath in icons_dirs: path = imagePath(iconPath+icon_string); if path: _icons_paths_cache[icon_name] = path; return path
+	return ''
 
 const replace_relative_path: PackedStringArray = ['assets/','mods/']
 static func getRelativePath(path: String) -> String:
@@ -351,7 +360,7 @@ static func getPath(path: String, withMod: bool = true) -> String:
 #endregion
 
 #region File metods
-static func file_exists(path: String) -> bool: return !!detectFileFolder(path)
+static func file_exists(path: StringName) -> bool: return !!detectFileFolder(path)
 
 static func get_dialog(dir: String = '') -> FileDialog:
 	var dialog = FileDialog.new()
@@ -436,7 +445,7 @@ static func loadShaderCodeAbsolute(absolute_path: String) -> Shader:
 
 #region Dirs Methods
 static func updateDirectories(): ##Update the folders that the [method detectFileFolder] will search the files.
-	_clear_dirs_cache()
+	_clear_paths_cache()
 	dirsToSearch.clear()
 	
 	var new_dirs: PackedStringArray
@@ -465,44 +474,41 @@ static func get_dir(dir: String) -> DirAccess:
 	_dir_exists_cache[dir] = _dir
 	return _dir
 
-static func _clear_dirs_cache(): _files_directories_cache.clear(); _dir_exists_cache.clear()
+static func _clear_paths_cache(): 
+	_files_directories_cache.clear(); 
+	_dir_exists_cache.clear()
+	_images_paths_cache.clear()
+	_icons_paths_cache.clear()
 #endregion
 
 #region get Files At Methods
 static func getFilesAt(folder: String, return_folder: bool = false, filters: Variant = '', with_extension: bool = false) -> PackedStringArray:
 	var f: PackedStringArray = PackedStringArray()
-	if filters and filters is String: filters = PackedStringArray([filters.right(-1) if filters.begins_with('.') else filters])
-	_check_filters(filters)
-	for i in dirsToSearch: f.append_array(_getFilesNoCheck(i+folder,return_folder,filters,with_extension))
+	if filters and filters is String: 
+		if filters.begins_with('.'): filters = filters.right(-1)
+		filters = PackedStringArray([filters])
+	else: _check_filters(filters)
+	
+	if return_folder: for i in dirsToSearch: 
+		f.append_array(_getFilesNoCheck(i+folder,return_folder,filters,with_extension))
+	else: 
+		for i in dirsToSearch: for s in _getFilesNoCheck(i+folder,return_folder,filters,with_extension): 
+			if !s in f: f.append(s)
 	return f
 
-static func _check_filters(filters: PackedStringArray) -> void:
+static func _check_filters(filters: PackedStringArray) -> PackedStringArray:
+	if !filters: return filters
 	var index: int = 0
-	while index < filters.size():
-		var string = filters[index]
-		if string.begins_with('.'): filters[index] = string.right(-1)
-		index += 1
-	
+	while index < filters.size(): var s = filters[index]; index += 1; if s.begins_with('.'): filters[index] = s.right(-1)
+	return filters
+
 static func getFilesAtAbsolute(
 	folder: String, 
 	return_folder: bool = false, 
 	filters: PackedStringArray = PackedStringArray(), 
 	with_extension: bool = false
 ) -> PackedStringArray:
-	if !filters: return _getFilesNoFilters(folder,return_folder,with_extension)
-	_check_filters(filters)
-	return _getFilesNoCheck(folder,return_folder,filters,with_extension)
-
-static func _getFilesNoFilters(folder: String, return_folder: bool = false, with_extension: bool = false) -> PackedStringArray:
-	var dir = get_dir(folder)
-	if !dir: return PackedStringArray()
-	if with_extension: return dir.get_files()
-	
-	var files: Dictionary[String,bool]
-	for file in dir.get_files():
-		if return_folder: files[folder+'/'+file] = true; continue
-		files[file] = true
-	return files.keys()
+	return _getFilesNoCheck(folder,return_folder,_check_filters(filters),with_extension)
 
 static func _getFilesNoCheck(
 	folder: String, 
@@ -512,16 +518,21 @@ static func _getFilesNoCheck(
 ) -> PackedStringArray:
 	var dir = get_dir(folder)
 	if !dir: return PackedStringArray()
-	if !filters and with_extension: return dir.get_files()
-	var files: Dictionary[String,bool]
-	for file in dir.get_files():
-		if filters:
-			var file_extension = file.get_extension()
-			if not filters.has(file_extension): continue
-			if !with_extension: file = file.left(-file_extension.length()-1)
-		if return_folder: files[folder+'/'+file] = true; continue
-		files[file] = true
-	return files.keys()
+	
+	var files: PackedStringArray = dir.get_files()
+	if !filters and !return_folder and with_extension: return files
+	
+	var index = 0
+	while index < files.size():
+		var s = files[index]
+		if filters and !(s.get_extension() in filters): 
+			files.remove_at(index); 
+			continue
+		if !with_extension: s = s.get_basename();
+		if return_folder: s = folder+'/'+s
+		files[index] = s
+		index += 1
+	return files
 #endregion
 
 #region Mod Methods

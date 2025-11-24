@@ -35,7 +35,7 @@ func _ready():
 	
 	character.material = null
 	character.animation.animation_finished.connect(func(anim):
-		if anim == 'firstDeath':
+		if anim == &'firstDeath':
 			sound.stream = Paths.music(loopSoundName)
 			sound.stream.loop = true
 			sound.play()
@@ -47,7 +47,7 @@ func _ready():
 	get_tree().create_timer(0.5).timeout.connect(func():
 		cameraTween = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
 		cameraTween.tween_property(self,'position',
-		-character.getCameraPosition() + ScreenUtils.screenCenter,
+		-character.getCameraPosition() + ScreenUtils.screenCenter*scale,
 		4)
 	)
 	add_child(character)
@@ -62,12 +62,13 @@ func confirm() -> void:
 	sound.stream = Paths.music(endSoundName)
 	sound.play()
 	state = 3
-	get_tree().create_timer(gameOverTime).timeout.connect(func():
-		create_tween().tween_property(self,'modulate:a',0,2.0).finished.connect(func():
-			if FunkinGD.game: FunkinGD.game.restartSong(true)
-			queue_free()
-		)
+	get_tree().create_timer(gameOverTime).timeout.connect(_on_confirm_time_completed)
+
+func _on_confirm_time_completed():
+	create_tween().tween_property(self,^'modulate:a',0,2.0).finished.connect(func():
+		if FunkinGD.game: FunkinGD.game.restartSong(true)
 	)
+
 func back() -> void:
 	if !back_state: return
 	Global.swapTree(back_state,true)
