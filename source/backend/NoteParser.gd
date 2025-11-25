@@ -66,11 +66,7 @@ static func _create_note_sustains(note: Note, length: float, stepCrochet: float)
 		time += sus_length
 		susNotes.append(sus)
 		index += 1
-
-		
 	susNotes[0].splashDisabled = false
-	
-	susNotes.back().splashDisabled = false
 	note.sustainLength = length
 	return susNotes
 

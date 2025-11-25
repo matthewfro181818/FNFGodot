@@ -12,8 +12,7 @@ var _sus_animated: bool
 
 func _init(data: int) -> void:
 	splashStyle = &'HoldNoteSplashes'
-	splashType = &'holdNoteCover'
-	
+	splashName = &'holdNoteCover'
 	isSustainNote = true
 	super._init(data)
 

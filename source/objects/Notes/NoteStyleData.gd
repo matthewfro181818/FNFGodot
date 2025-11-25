@@ -2,6 +2,7 @@ static var styles_loaded: Dictionary[StringName,Dictionary]
 
 const DEFAULT_NOTES_SCALE: float = 0.7
 
+
 enum StyleType{
 	NOTES,
 	HOLD_NOTES,

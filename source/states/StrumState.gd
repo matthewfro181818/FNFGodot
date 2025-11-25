@@ -8,7 +8,7 @@ const NoteSplash = preload("uid://cct1klvoc2ebg")
 const Note = preload("uid://deen57blmmd13")
 
 const EventNoteUtils = preload("uid://dqymf0mowy0dt")
-const NoteUtils = preload("uid://h8nnpmoaoq70")
+const NoteParser = preload("uid://h8nnpmoaoq70")
 const NoteSustain = preload("uid://bhagylovx7ods")
 
 const NoteHit = preload("uid://dx85xmyb5icvh")
@@ -192,7 +192,7 @@ func loadSongObjects(): ##Load song data. Used in PlayState
 	loadNotes()
 
 func loadNotes():
-	if !unspawnNotes:  unspawnNotes = NoteUtils.getNotesFromData(SONG)
+	if !unspawnNotes:  unspawnNotes = NoteParser.getNotesFromData(SONG)
 	_unspawnNotesLength = unspawnNotes.size()
 	reloadNotes()
 
@@ -319,7 +319,7 @@ func createStrum(i: int, opponent_strum: bool = true, pos: Vector2 = Vector2.ZER
 	strum._position = pos
 	
 	strumLineNotes.add(strum)
-	strum.name = "StrumNote"
+	strum.name = &"StrumNote"
 	return strum
 #endregion
 
@@ -378,10 +378,11 @@ func _check_respawn_notes() -> void:
 		_respawnIndex += 1
 
 func _check_hit_notes() -> void:
-	for i: Note in hitNotes:
-		if !i: continue
-		if Input.is_action_just_pressed(i.hit_action): preHitNote(i)
-		hitNotes[i.noteData] = null
+	var index: int = hitNotes.size()
+	while index: 
+		index -= 1
+		var i = hitNotes[index]
+		if i: hitNotes[index] = null; if Input.is_action_just_pressed(i.hit_action): preHitNote(i)
 
 #region Note Methods
 func spawnNote(note: Note) -> void: ##Spawns the note
@@ -442,10 +443,13 @@ func hitNote(note: Note) -> void: ##Called when the hits a [NoteBase]
 	var strumAnim: StringName = &'confirm'
 	if note.mustPress != playAsOpponent and note.isEndSustain: strumAnim = &'press'
 	var strum: StrumNote = note.strumNote
-	if note.isEndSustain: _disableHoldSplash(strum.get_instance_id())
+	
+	if note.isEndSustain: 
+		var holdSplash = grpNoteHoldSplashes.get(strum.get_instance_id())
+		if holdSplash: holdSplash.animation.play(&'end')
 	
 	if note.strumConfirm: _strum_confirm(strum,note,strumAnim)
-	if splashAllowed(note): createSplash(note)
+	if splashAllowed(note): createSplash(note);
 	note.killNote()
 
 func isPlayerNote(note: Note) -> bool: return note.mustPress != playAsOpponent
@@ -507,67 +511,37 @@ func createSplash(note) -> NoteSplash: ##Create Splash
 	if !strum or !strum.visible: return
 	
 	var splashParent = note.splashParent
-	var splash_type = NoteSplash.getSplashTypeFromNote(note)
-	var splash: NoteSplash = _check_splash(note.splashStyle,note.splashType,note.splashPrefix,splash_type)
+	var splash: NoteSplash = _check_splash(note.splashStyle,note.splashName,note.splashPrefix)
 	if !splash:
-		splash = _create_splash(note.splashStyle,note.splashType,note.splashPrefix,splash_type)
-		if !splash: return
-		
+		splash = _create_splash_from_note(note); if !splash: return
 		if splashParent: grpNoteSplashes.members.append(splash); splashParent.add_child(splash)
 		else: grpNoteSplashes.add(splash)
 	else: 
-		show_splash(splash)
+		splash.strum = strum
+		splash.visible = true
 		if splashParent: splash.reparent(splashParent,false)
 		elif splash._is_custom_parent: splash.reparent(grpNoteSplashes,false)
 	
-	splash.strum = strum
+	if splash.holdSplash: grpNoteHoldSplashes[strum.get_instance_id()] = splash
 	splash._is_custom_parent = !!splashParent
-	_update_splash(splash)
-	return splash
-
-func _update_splash(splash: NoteSplash):
 	splash.isPixelSplash = isPixelStage
-	splash.followStrum()
-	match splash.splashType:
-		NoteSplash.SplashType.HOLD_COVER:
-			grpNoteHoldSplashes[splash.strum.get_instance_id()] = splash
-			splash.animation.play(&'splash',true)
-			splash.animation.speed_scale = minf(100.0/Conductor.stepCrochet,1.5)
-		_: splash.animation.play_random(true)
-
-func show_splash(splash: NoteSplash, show: bool = true) -> void:
-	splash.visible = show
-	splash.process_mode = PROCESS_MODE_INHERIT if show else PROCESS_MODE_DISABLED
-
-func _disableHoldSplash(id: int = 0) -> void:
-	var splash = grpNoteHoldSplashes.get(id)
-	if !splash: return
-	show_splash(splash,false)
-	grpNoteHoldSplashes[id] = null
-
-func _create_splash(style: StringName, type: StringName, prefix: StringName, splash_type: NoteSplash.SplashType) -> NoteSplash:
-	var splash = NoteSplash.new()
-	if !splash.loadSplash(style,splash_type,prefix): return
-	
-	_save_splash_type(style,type,prefix)
-	_splashes_loaded[style][type][prefix].append(splash)
-	
-	if splash_type != NoteSplash.SplashType.HOLD_COVER: splash.animation.curAnim.animation_finished.connect(splash.hide)
 	return splash
 
-func _save_splash_type(style: StringName, type: StringName, prefix: StringName = &'') -> bool:
-	var added: bool = false 
-	if !_splashes_loaded.has(style): _splashes_loaded[style] = {}; added = true
+func _create_splash_from_note(note: Note) -> NoteSplash:
+	var splashStyle: StringName = note.splashStyle
+	var prefix: StringName = note.splashPrefix
+	var splash = NoteSplash.new()
+	splash.strum = note.strumNote
+	splash.holdSplash = note.isSustainNote
+	if !splash.loadSplash(splashStyle,prefix): return
+	_get_splash_storage(note.splashStyle,note.splashName,note.splashPrefix).append(splash)
+	return splash
+
+func _get_splash_storage(style: StringName, name: StringName, prefix: StringName) -> Array:
+	return _splashes_loaded.get_or_add(style,{}).get_or_add(name,{}).get_or_add(prefix,[])
 	
-	if type and !_splashes_loaded[style].has(type):_splashes_loaded[style][type] = {}; added = true
-	if prefix and !_splashes_loaded[style][type].has(prefix):
-		_splashes_loaded[style][type][prefix] = Array([],TYPE_OBJECT,&'Node2D',NoteSplash)
-		added = true
-	return added
-	
-func _check_splash(style: StringName, type: StringName, prefix: StringName, splash_type: NoteSplash.SplashType) -> NoteSplash:
-	if _save_splash_type(style,type,prefix): return
-	for s in _splashes_loaded[style][type][prefix]: if !s.visible and s.splashType == splash_type: return s
+func _check_splash(style: StringName, splash_name: StringName, prefix: StringName) -> NoteSplash:
+	for s in _get_splash_storage(style,splash_name,prefix): if !s.visible: return s
 	return
 	
 func splashAllowed(n: Note) -> bool:

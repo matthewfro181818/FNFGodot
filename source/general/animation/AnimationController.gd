@@ -58,11 +58,21 @@ var node_to_animate: Node: set = set_node_animate ##The Node to animate, [u][b]e
 @export var maxFrames: int = 0 ##The number of frames in the animation.
 
 
-@export var curFrame: int = 0: set = set_cur_frame, get = get_cur_frame ##The current frame of the animation. Can also be changed outside of the script.
+@export var curFrame: int = 0:   ##The current frame of the animation. Can also be changed outside of the script.
+	set(f):
+		f = clampi(f,0,maxi(0,maxFrames-1))
+		if _real_cur_frame == f: return
+		_float_frame = f
+		_real_cur_frame = f
+	get(): return _real_cur_frame
 
 var curFrameData: Dictionary
 
-@export var _real_cur_frame: int = 0: set = _set_real_cur_frame
+@export var _real_cur_frame: int = 0: 
+	set(f):
+		if _real_cur_frame == f: return
+		_real_cur_frame = f
+		set_frame(f)
 
 @export var finished: bool = false: set = _set_finished ##If the animation is finished.
 var paused: bool = false: set = pause
@@ -91,20 +101,12 @@ func process_frame(delta: float) -> void: ##Process animation
 	if reverse: _float_frame -= delta*_animation_speed
 	else: _float_frame += delta*_animation_speed
 	
-	if _float_frame >= 0 and _float_frame < maxFrames: 
-		_real_cur_frame = _float_frame; return
-	
-	#Loop Animation
-	if looped: _float_frame = loop_frame; return
-	
-	#Finish Animation
-	finished = true
+	var int_frame = int(_float_frame)
+	if int_frame >= 0 and int_frame < maxFrames: _real_cur_frame = int_frame; return
+	if looped: _float_frame = loop_frame; return #Loop Animation
+	finished = true #Finish Animation
 
-func play() -> void: ##Start the animation.
-	reverse = false
-	_float_frame = 0
-	loop_frame = 0
-	start_anim()
+func play() -> void: reverse = false; _float_frame = 0; loop_frame = 0; start_anim() ##Start the animation.
 
 func play_reverse() -> void: ##Play the animation in reverse.
 	reverse = true
@@ -119,8 +121,9 @@ func start_anim():
 	if !frames: maxFrames = 0; return
 	maxFrames = frames.size()
 	
-	if _real_cur_frame != _float_frame: _real_cur_frame = _float_frame
-	else: set_frame(_float_frame)
+	var int_frame = int(_float_frame)
+	if _real_cur_frame != int_frame: _real_cur_frame = int_frame
+	else: set_frame(int_frame)
 	
 	animation_started.emit()
 	
@@ -131,10 +134,7 @@ func resume() -> void:  ##Resume progress
 func pause(p: bool = true) -> void: paused = p; playing = !p ##Pause animation
 
 func stop() -> void: ##Stop the animation, making it not process frames.
-	paused = false
-	playing = false
-	_float_frame = 0
-	animation_stopped.emit()
+	paused = false; playing = false; _float_frame = 0; animation_stopped.emit()
 
 func set_frame(frame: int) -> void:
 	curFrameData = frames[frame]
@@ -144,16 +144,6 @@ func set_frame(frame: int) -> void:
 
 
 #region Setters
-func set_cur_frame(f: int):
-	f = clampi(f,0,maxi(0,maxFrames-1))
-	if curFrame == f: return
-	_float_frame = f
-	_real_cur_frame = f
-
-func _set_real_cur_frame(f: int):
-	if _real_cur_frame == f: return
-	_real_cur_frame = f
-	set_frame(f)
 
 func _set_finished(f: bool):
 	if f == finished: return
@@ -177,8 +167,5 @@ func set_speed_scale(value: float) -> void:
 	_update_animation_speed()
 #endregion
 
-#region Getters
-func get_cur_frame() -> int: return _real_cur_frame
-#endregion
 
 func _update_animation_speed() -> void: _animation_speed = frameRate*speed_scale

@@ -114,6 +114,8 @@ var videoPlayer: VideoStreamPlayer
 
 var introSoundsSuffix: StringName
 
+
+var stateLoaded: bool = false #Used in FunkinGD
 func _ready():
 	Global.onSwapTree.connect(destroy,CONNECT_ONE_SHOT)
 	name = 'PlayState'
@@ -143,7 +145,7 @@ func _ready():
 	Conductor.section_hit.connect(onSectionHit)
 	Conductor.section_hit_once.connect(onSectionHitOnce)
 	FunkinGD.callOnScripts(&'onCreatePost')
-	print(is_node_ready())
+	stateLoaded = true
 	startCountdown()
 
 func _process(delta: float) -> void:

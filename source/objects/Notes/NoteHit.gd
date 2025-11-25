@@ -15,7 +15,6 @@ func updateRating() -> void:
 	
 	if !sustainParents: return
 	sustainParents[0].ratingMod = ratingMod
-	sustainParents.back().ratingMod = ratingMod
 
 func followStrum(strum: StrumNote = strumNote) -> void:
 	if !strum: return

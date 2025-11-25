@@ -133,7 +133,7 @@ static func _insert_script(script: Object, path: String = '') -> bool:
 	
 	
 	if args.has(&'onCreate'): script.onCreate()
-	if args.has(&'onCreatePost') and game and game.is_node_ready(): script.onCreatePost(); 
+	if args.has(&'onCreatePost') and game and game.get(&'stateLoaded'): script.onCreatePost(); 
 	return true
 
 static func removeScript(path: Variant):

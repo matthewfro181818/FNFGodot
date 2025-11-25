@@ -6,14 +6,11 @@ const NoteStyleData = preload("uid://by78myum2dx8h")
 const NoteSplash = preload("res://source/objects/Notes/NoteSplash.gd")
 
 const SplashOffset = Vector2(100,100)
+
+const HOLD_ANIMATIONS: Array = [&'start',&'hold',&'end']
 static var splash_datas: Dictionary[StringName,Dictionary]
 static var mosaicShader: Material
 
-enum SplashType{
-	NORMAL,
-	HOLD_COVER,
-	HOLD_COVER_END
-}
 var texture: StringName ## Splash Texture
 
 var direction: int ##Splash Direction
@@ -27,93 +24,90 @@ var strum: Node ##The Splash strum.
 
 var splash_scale: Vector2 = Vector2.ZERO ##Splash scale.
 
-var splashType: SplashType = SplashType.NORMAL
+var holdSplash: bool
 var splashData: Dictionary
 
-func _init():
+func _init(): 
 	super._init(true)
-	visibility_changed.connect(_on_visibility_changed)
+	animation.animation_finished.connect(_on_animation_finished)
 
-func _on_visibility_changed(): set_process(visible); if visible: _update_position()
+func _ready() -> void:
+	visibility_changed.connect(_on_visibility_changed)
+	followStrum()
+
+func _on_visibility_changed(): 
+	set_process(visible); 
+	if !visible: return
+	followStrum()
+	_update_position();
+	if holdSplash: 
+		animation.play(&'start',false); _update_animation_scale();
+	else: animation.play_random()
+
+func _update_animation_scale() -> void: animation.setAnimDataValue(&'splash-loop',&'speed_scale',minf(100.0/Conductor.stepCrochet,1.5))
 
 func _set_pixel(isPixel: bool):
 	if isPixel == isPixelSplash: return
 	isPixelSplash = isPixel
 	
 	if isPixel:
+		if splashData.get(&'isPixel'): return
 		if !mosaicShader: mosaicShader = Paths.loadShader('MosaicShader')
 		material = mosaicShader
 		if material: material.set_shader_parameter(&'strength',6.0)
 	else: material = null
 
 ##Add animation to splash. Returns [code]true[/code] if the animation as added successfully.
-func loadSplash(style: StringName,type: SplashType, prefix: StringName = &'default') -> bool:
-	splashType = type
-	match type:
-		SplashType.HOLD_COVER,SplashType.HOLD_COVER_END: 
-			splashData = NoteStyleData.getStyleData(style,NoteStyleData.StyleType.HOLD_SPLASH)
-		_: splashData = NoteStyleData.getStyleData(style,NoteStyleData.StyleType.SPLASH)
-
+func loadSplash(style: StringName, prefix: StringName = &'default') -> bool:
+	splashData = NoteStyleData.getStyleData(style,NoteStyleData.StyleType.HOLD_SPLASH if holdSplash else NoteStyleData.StyleType.SPLASH)
 	if !splashData: return false
 	addSplashAnimation(self,prefix)
 	var _splash_scale = splashData.get(&'scale',1.0)
 	scale = Vector2(_splash_scale,_splash_scale)
 	return true
 
+func _on_animation_finished(anim_name: StringName) -> void:
+	if !holdSplash: visible = false; return  
+	match anim_name:
+		&'start': animation.play(&'hold',true)
+		&'end': visible = false
+
 func _process(_d) -> void:
 	super._process(_d)
-	if !visible or splashType != SplashType.HOLD_COVER or !strum: return
+	if !visible or !holdSplash or !strum: return
 	followStrum()
-	if strum.mustPress: visible = Input.is_action_pressed(strum.hit_action)
 
 func followStrum() -> void:
+	if !strum: return
 	modulate.a = strum.modulate.a
-	if splashType == SplashType.HOLD_COVER: rotation = strum.rotation
+	if holdSplash: rotation = strum.rotation
 	_position = strum._position
 
-
-static func getSplashTypeFromNote(note: Note) -> SplashType:
-	if !note.isSustainNote: return SplashType.NORMAL
-	return SplashType.HOLD_COVER_END if note.isEndSustain else SplashType.HOLD_COVER
-
-static func addSplashAnimation(splash: NoteSplash,prefix: StringName):
+static func addSplashAnimation(splash: NoteSplash,prefix: StringName) -> void:
 	var data = splash.splashData.data.get(prefix)
 	if !data: data = splash.splashData.data.get(&'default'); if !data: return
 	if data is Array: data = data.pick_random()
 	
 	var asset = data.get(&'assetPath')
-	if !asset: asset = splash.splashData.assetPath; if !asset: return false
+	if !asset: asset = splash.splashData.assetPath; if !asset: return
 	
 	splash.image.texture = Paths.texture(asset)
 	
-	if !splash.image.texture: return false
+	if !splash.image.texture: return
 	
 	var offsets = splash.splashData.get(&'offsets',Vector2.ZERO)
-	match splash.splashType:
-		SplashType.NORMAL:
-			var prefix_anim = data.prefix
-			if !prefix_anim: return false
-			splash.animation.addAnimByPrefix(&'splash',prefix_anim,24.0,false)
-			splash.addAnimOffset(&'splash',data.get(&'offsets',offsets)+SplashOffset)
-		
-		SplashType.HOLD_COVER:
-			var start_data = data.get(&'start')
-			if start_data:
-				var sprefix = start_data.get(&'prefix')
-				if sprefix:
-					splash.animation.addAnimByPrefix(&'splash',sprefix,24.0,false)
-					splash.animation.auto_loop = true
-					splash.addAnimOffset(&'splash',start_data.get(&'offsets',offsets))
-			
-			var hold_data = data.get(&'hold')
-			if hold_data:
-				var hprefix = hold_data.get(&'prefix')
-				if !hprefix: return
-				splash.animation.addAnimByPrefix(&'splash-hold',hprefix,24.0,true)
-				splash.addAnimOffset(&'splash-hold',hold_data.get(&'offsets',offsets))
-		SplashType.HOLD_COVER_END:
-			var end_data = data.get(&'end')
-			if !end_data: return false
-			splash.animation.addAnimByPrefix(&'splash',end_data.prefix,24.0,false)
-			splash.addAnimOffset(&'splash',end_data.get(&'offsets',offsets))
-	return true
+	
+	if !splash.holdSplash:
+		var prefix_anim = data.prefix; if !prefix_anim: return
+		splash.animation.addAnimByPrefix(&'splash',prefix_anim,24.0,false)
+		splash.addAnimOffset(&'splash',data.get(&'offsets',offsets)+SplashOffset)
+		return
+	
+	for i in HOLD_ANIMATIONS:
+		var anim_data = data.get(i)
+		if !data: continue
+		var sprefix = anim_data.get(&'prefix')
+		if !sprefix: continue
+		splash.animation.addAnimByPrefix(i,sprefix,24.0,i==&'hold')
+		splash.animation.auto_loop = true
+		splash.addAnimOffset(i,anim_data.get(&'offsets',offsets))

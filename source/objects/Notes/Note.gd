@@ -104,10 +104,10 @@ var judgementTime: float = INF ##Used in ModchartEditor
 
 
 #region Splash
-var splashStyle: StringName = 'NoteSplashes' ##Splash Json
-var splashType: StringName = 'noteSplash' ##Splash Data
-var splashPrefix: StringName ##Splash Animation
-var splashDisabled: bool
+var splashStyle: StringName = &'NoteSplashes' ##Splash Json
+var splashName: StringName = &'noteSplash' ##Splash Type
+var splashPrefix: StringName ##Splash Prefix
+var splashDisabled: bool ##If [code]true[/code], when hits this note, the splash will not be created.
 var splashParent: Node
 #endregion
 
