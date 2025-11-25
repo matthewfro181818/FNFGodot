@@ -243,7 +243,7 @@ static func runTimer(tag: StringName, time: float, loops: int = 1) -> Timer: ##R
 	if !time: 
 		while loops: loops -= 1; callOnScripts(&'onTimerCompleted',[tag,loops]); 
 		return
-	var data: Array = timersPlaying.get(tag)
+	var data = timersPlaying.get(tag)
 	if !data: return _create_timer(tag,time,loops)[0]
 	data[1] = loops
 	var timer: Timer

@@ -176,9 +176,9 @@ func loadSong(data: String = song_json_file, songDifficulty: String = difficulty
 
 
 func loadSongObjects(): ##Load song data. Used in PlayState
-	var arrow_s = SONG.get(&'arrowStyle')
-	var splash_s = SONG.get(&'splashStyle')
-	var hold_s = SONG.get(&'holdSplashStyle')
+	var arrow_s = SONG.get('arrowStyle')
+	var splash_s = SONG.get('splashStyle')
+	var hold_s = SONG.get('holdSplashStyle')
 	
 	if arrow_s: arrowStyle = arrow_s
 	else: arrowStyle = &'pixel' if isPixelStage else &'funkin'
