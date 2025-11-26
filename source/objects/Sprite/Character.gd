@@ -297,8 +297,8 @@ static func _convert_psych_to_original(json: Dictionary) -> Dictionary[StringNam
 	for i in anims:
 		var anim = getAnimBaseData()
 		
-		DictionaryUtils.convertKeysToStringNames(i)
-		DictionaryUtils.merge_existing(anim,i)
+		DictUtils.convertKeysToStringNames(i)
+		DictUtils.merge_existing(anim,i)
 		if i.has(&'indices'): anim.frameIndices = i.indices
 		if i.has(&'loop'): anim.looped = i.loop
 		if i.has(&'anim'):  anim.name = i.anim; if i.has(&'name'): anim.prefix = i.name
@@ -320,7 +320,7 @@ static func _convert_psych_to_original(json: Dictionary) -> Dictionary[StringNam
 	new_json.camera_position = json.get(&'camera_position',[0,0])
 	new_json.scale = json.get(&'scale',1.0)
 	
-	DictionaryUtils.merge_existing(new_json,json)
+	DictUtils.merge_existing(new_json,json)
 	return new_json
 
 

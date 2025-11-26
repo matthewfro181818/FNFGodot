@@ -45,11 +45,14 @@ static func getAnimFramesIndices(prefix: String, file: String, indices: PackedIn
 	var tracks: Array = getAnimFrames(prefix,file)
 	if !tracks: return tracks
 	
-	var frames: Array = []
-	var length = tracks.size()-1
-	for i in indices:
-		if i < 0 or i > length: continue
-		frames.append(tracks[i])
+	var frames: Array
+	var max_frames = tracks.size()
+	var indices_length = indices.size()
+	var i = 0
+	while i < indices_length:
+		var ind = indices[i];
+		if ind >= 0 and ind < max_frames: frames.append(tracks[ind])
+		i += 1
 	return frames
 
 static func findAnimFile(tex: String):

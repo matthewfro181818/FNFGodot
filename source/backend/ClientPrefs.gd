@@ -125,7 +125,7 @@ static var data: Dictionary[StringName, Variant] = {
 static func _init() -> void:
 	var options = Paths.loadJson("res://data/options.json")
 	if options: 
-		DictionaryUtils.merge_existing(data,options)
+		DictUtils.merge_existing(data,options)
 		setOptionValues()
 	
 static func setOptionValues():

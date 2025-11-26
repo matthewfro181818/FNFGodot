@@ -91,10 +91,10 @@ var playing: bool
 
 var _animation_speed: float = frameRate
 
-signal animation_finished
-signal animation_started
-signal animation_resumed
-signal animation_stopped
+signal animation_finished()
+signal animation_started()
+signal animation_resumed()
+signal animation_stopped()
 
 func process_frame(delta: float) -> void: ##Process animation
 	if !playing: return

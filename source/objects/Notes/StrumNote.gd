@@ -61,10 +61,7 @@ func _init(dir: int = 0):
 	
 	offset_follow_scale = true
 	offset_follow_rotation = true
-	animation.animation_finished.connect(func(anim):
-		if anim != &'static' and return_to_static_on_finish and not mustPress: 
-			animation.play(&'static')
-	)
+	animation.animation_finished.connect(_on_animation_finished)
 const _anim_direction: PackedStringArray = ['left','down','up','right']
 
 func reloadStrumNote() -> void: ##Reload Strum Texture Data
@@ -118,7 +115,7 @@ func setTexture(_texture: String) -> void: texture = _texture;reloadStrumNote()
 
 func setStrumStyleName(_name: String) -> void:
 	styleName = _name
-	styleData = NoteStyleData.getStyleData(_name,NoteStyleData.StyleType.STRUM)
+	styleData = NoteStyleData.getStyleData(_name,&'strums')
 
 func setMultSpeed(speed: float) -> void:
 	if speed == multSpeed: return
@@ -134,6 +131,7 @@ func setDownscroll(down: bool) -> void:
 func strumConfirm(anim: StringName = &'confirm'):
 	animation.play(anim,true)
 	hitTime = Conductor.stepCrochet/1000.0
+	return_to_static_on_finish = true
 
 func _process(delta: float) -> void:
 	super._process(delta)
@@ -145,6 +143,8 @@ func _process(delta: float) -> void:
 		hitTime -= delta
 		if hitTime <= 0.0: hitTime = 0.0; animation.play(&'static')
 
+func _on_animation_finished(anim: StringName):
+	if anim != &'static' and return_to_static_on_finish and !mustPress: animation.play(&'static')
 func _property_can_revert(property: StringName) -> bool:
 	match property:
 		&'data',&'styleData': return false

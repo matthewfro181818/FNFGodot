@@ -609,7 +609,7 @@ static func character(path: String) -> Dictionary[StringName,Variant]:
 	var file = characterPath(path)
 	if !file: return {}
 	
-	var json = DictionaryUtils.getDictsTyped(loadJsonNoCache(file),TYPE_STRING_NAME)
+	var json = DictUtils.getDictTyped(loadJsonNoCache(file),TYPE_STRING_NAME)
 	json.merge(Character._convert_psych_to_original(json),true)
 	return json
 #endregion

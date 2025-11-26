@@ -236,9 +236,7 @@ func clear():
 	gf = null
 
 #region Setters
-func set_default_zoom(value: float) -> void: 
-	super.set_default_zoom(value);
-	camGame.defaultZoom = value;
+func set_default_zoom(value: float) -> void: super.set_default_zoom(value); camGame.defaultZoom = value;
 #endregion
 
 func getCharacterNote(note: Note) -> Character: return gf if note.gfNote else (boyfriend if note.mustPress else dad)

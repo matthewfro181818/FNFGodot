@@ -31,7 +31,8 @@ static func getNotesFromData(songData: Dictionary = {}) -> Array[Note]:
 			
 			var susLength = float(noteSection.get('l',0.0))
 			if susLength < stepCrochet: continue 
-			for i in _create_note_sustains(note,susLength,stepCrochet): _insert_note_to_array(i,_notes)
+			for i in _create_note_sustains(note,susLength): _insert_note_to_array(i,_notes)
+			#for i in _create_note_sustains(note,susLength,stepCrochet): _insert_note_to_array(i,_notes)
 	
 	var type_unique: PackedStringArray
 	for i in types_founded: if not i in type_unique: type_unique.append(i)
@@ -50,7 +51,13 @@ static func _insert_note_to_array(note: Note, array: Array) -> bool:
 	array.push_front(note)
 	return true
 
-static func _create_note_sustains(note: Note, length: float, stepCrochet: float) -> Array[NoteSustain]:
+static func _create_note_sustains(note: Note, length: float) -> Array[NoteSustain]:
+	var susNotes: Array[NoteSustain] = [createSustainFromNote(note,false),createSustainFromNote(note,true)]
+	susNotes[0].sustainLength = length
+	susNotes[1].strumTime += length
+	return susNotes
+
+static func _create_note_sustains_old_version(note: Note, length: float, stepCrochet: float) -> Array[NoteSustain]:
 	var susNotes: Array[NoteSustain] = note.sustainParents
 	var time: float = note.strumTime
 	var index: int = 0
@@ -66,6 +73,7 @@ static func _create_note_sustains(note: Note, length: float, stepCrochet: float)
 		time += sus_length
 		susNotes.append(sus)
 		index += 1
+		
 	susNotes[0].splashDisabled = false
 	note.sustainLength = length
 	return susNotes
@@ -91,9 +99,10 @@ static func createSustainFromNote(note: Note,isEnd: bool = false) -> NoteSustain
 	sus.splashStyle = &''
 	sus.noteParent = note
 	sus.isEndSustain = isEnd
-	sus.splashDisabled = true
+	sus.splashDisabled = isEnd
 	sus.hitHealth /= 2.0
 	
+	sus.strumTime = note.strumTime
 	sus.noteType = note.noteType
 	sus.gfNote = note.gfNote
 	sus.mustPress = note.mustPress

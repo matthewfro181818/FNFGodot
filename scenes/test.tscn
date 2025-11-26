@@ -1,3 +1,11 @@
-[gd_scene format=3 uid="uid://r43ug3iqri4f"]
+[gd_scene load_steps=2 format=3 uid="uid://r43ug3iqri4f"]
+
+[ext_resource type="Texture2D" uid="uid://11ak4nr2c5oi" path="res://assets/images/bfIdle.png" id="1_errlg"]
 
 [node name="Test" type="Node"]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="BfIdle" type="Sprite2D" parent="CanvasLayer"]
+position = Vector2(812, 449)
+texture = ExtResource("1_errlg")

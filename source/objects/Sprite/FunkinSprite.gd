@@ -192,14 +192,13 @@ func _connect_animation() -> void:
 	_update_animation_image()
 	image.region_rect = Rect2(0,0,0,0)
 
-func _on_animation_renamed(old,new): if _animOffsets.has(old): DictionaryUtils.rename_key(_animOffsets,old,new)
+func _on_animation_renamed(old,new): if _animOffsets.has(old): DictUtils.rename_key(_animOffsets,old,new)
 
 func set_offset_from_anim(anim: String) -> void:
 	if !_animOffsets.has(anim): return
 	var off = _animOffsets[anim]
 	if animation and animation.current_animation == anim: offset = off
 #endregion
-
 
 #region Velocity Methods
 func _check_velocity() -> void: _accelerating = acceleration != Vector2.ZERO or velocity != Vector2.ZERO
@@ -266,7 +265,6 @@ func setGraphicSize(sizeX: float = -1.0, sizeY: float = -1.0) -> void: ##Cut the
 	image.pivot_offset = pivot_offset
 #endregion
 
-
 #region Updaters
 
 #region Scroll Factor
@@ -278,6 +276,7 @@ func _update_scroll_factor() -> void:
 	_scroll_offset = pos * _real_scroll_factor
 #endregion
 
+#region Updaters
 func _update_position() -> void: position = _get_real_position()
 
 func _update_graphic_offset() -> void: _graphic_offset = image.pivot_offset*_graphic_scale
@@ -296,6 +295,9 @@ func _update_real_offset() -> void:
 	if offset_follow_rotation: off = off.rotated(rotation)
 	_real_offset = off
 
+#endregion
+
+#region Change Signals
 func _on_texture_changed() -> void:
 	if !image.texture: 
 		imageSize = Vector2.ZERO;
@@ -313,6 +315,7 @@ func _on_image_changed() -> void:
 	image.texture_changed.connect(_on_texture_changed)
 	_update_animation_image()
 #endregion
+
 
 ##Remove the Sprite from the scene. The same as using [code]get_parent().remove_child(self)[/code]
 func kill() -> void: var parent = get_parent(); if parent: parent.remove_child(self)  

@@ -24,6 +24,7 @@ var songPositionSeconds: float ##[param songPosition] in seconds.
 
 var crochet: float
 var stepCrochet: float
+var stepCrochetMs: float
 var sectionCrochet: float
 
 var songLength: float
@@ -365,6 +366,7 @@ func detectBpmChanges() -> void:
 func _update_bpm() -> void:
 	crochet = get_crochet(bpm)
 	stepCrochet = crochet/4.0
+	stepCrochetMs = stepCrochet/1000.0
 	sectionCrochet = crochet*4.0
 	_update_rhythm()
 	bpm_changes.emit()

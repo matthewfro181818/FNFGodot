@@ -108,9 +108,10 @@ func _ready() -> void: _update_camera_size()
 
 #region Size Methods
 func _update_camera_size():
-	var size = Vector2(width,height)
+	bg.scale.x = width; bg.scale.y = height
+	var size = bg.scale
 	flashSprite.scale = size
-	bg.scale = size
+	
 	if viewport: viewport.size = size
 	pivot_offset = size/2.0
 	_update_rect_visible()
@@ -245,10 +246,9 @@ func _update_shake_time(delta: float):
 
 func _updateShake(delta: float):
 	_update_shake_time(delta)
-	_shake_pos = Vector2(
-		randf_range(-shakeIntensity,shakeIntensity),
-		randf_range(-shakeIntensity,shakeIntensity)
-	)*1000.0
+	_shake_pos.x = randf_range(-shakeIntensity,shakeIntensity)*1000.0
+	_shake_pos.y = randf_range(-shakeIntensity,shakeIntensity)*1000.0
+
 #endregion
 func fade(color: Variant = Color.BLACK,time: float = 1.0, _force: bool = true, _fadeIn: bool = true) -> void: ##Fade the camera.
 	var tag = 'fade'+name
@@ -324,10 +324,11 @@ func _update_angle(update_pivo: bool = true)  -> void:
 	if update_pivo: _update_pivot()
 
 func _update_zoom(update_pivo: bool = true) -> void:
+	var new_zoom = Vector2(zoom,zoom)
 	if viewport: 
 		viewport.canvas_transform.x.x = zoom
 		viewport.canvas_transform.y.y = zoom
-	else: scroll_camera.scale = Vector2(zoom,zoom)
+	else: scroll_camera.scale = new_zoom
 	if update_pivo: _update_pivot()
 
 func _update_scroll_pos() -> void: _scroll_position = -scroll + scrollOffset
@@ -344,10 +345,10 @@ func _update_scroll_transform():
 #region Getters
 func _property_get_revert(property: StringName) -> Variant:
 	match property:
-		'zoom': return defaultZoom
-		'defaultZoom': return 1.0
-		'scrollOffset': return Vector2.ZERO
-		'angle','shakeIntensity','x','y': return 0.0
+		&'zoom': return defaultZoom
+		&'defaultZoom': return 1.0
+		&'scrollOffset': return Vector2.ZERO
+		&'angle',&'shakeIntensity',&'x',&'y': return 0.0
 	return null
 
 #endregion

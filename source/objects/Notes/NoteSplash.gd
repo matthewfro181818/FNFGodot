@@ -3,7 +3,7 @@ extends FunkinSprite
 
 const Note = preload("uid://deen57blmmd13")
 const NoteStyleData = preload("uid://by78myum2dx8h")
-const NoteSplash = preload("res://source/objects/Notes/NoteSplash.gd")
+const NoteSplash = preload("uid://cct1klvoc2ebg")
 
 const SplashOffset = Vector2(100,100)
 
@@ -25,6 +25,10 @@ var strum: Node ##The Splash strum.
 var splash_scale: Vector2 = Vector2.ZERO ##Splash scale.
 
 var holdSplash: bool
+
+var splashName: StringName
+var splashStyle: StringName
+var splashPrefix: StringName
 var splashData: Dictionary
 
 func _init(): 
@@ -57,14 +61,6 @@ func _set_pixel(isPixel: bool):
 		if material: material.set_shader_parameter(&'strength',6.0)
 	else: material = null
 
-##Add animation to splash. Returns [code]true[/code] if the animation as added successfully.
-func loadSplash(style: StringName, prefix: StringName = &'default') -> bool:
-	splashData = NoteStyleData.getStyleData(style,NoteStyleData.StyleType.HOLD_SPLASH if holdSplash else NoteStyleData.StyleType.SPLASH)
-	if !splashData: return false
-	addSplashAnimation(self,prefix)
-	var _splash_scale = splashData.get(&'scale',1.0)
-	scale = Vector2(_splash_scale,_splash_scale)
-	return true
 
 func _on_animation_finished(anim_name: StringName) -> void:
 	if !holdSplash: visible = false; return  
@@ -83,26 +79,45 @@ func followStrum() -> void:
 	if holdSplash: rotation = strum.rotation
 	_position = strum._position
 
-static func addSplashAnimation(splash: NoteSplash,prefix: StringName) -> void:
+##Add animation to splash. Returns [code]true[/code] if the animation as added successfully.
+static func loadSplash(style: StringName, splash_name: StringName = &'default', prefix: StringName = &'', holdSplash: bool =false) -> NoteSplash:
+	var data = NoteStyleData.getStyleData(style,splash_name,NoteStyleData.StyleType.SPLASH)
+	if !data: return
+	var splash: NoteSplash = NoteSplash.new()
+	splash.splashData = data
+	splash.splashStyle = style
+	splash.splashName = splash_name
+	splash.splashPrefix = prefix
+	splash.holdSplash = holdSplash
+	if !_load_splash_animation(splash,prefix): return null
+	return splash
+
+static func loadSplashFromNote(note: Note) -> NoteSplash:
+	return loadSplash(note.splashStyle,note.splashName,note.splashPrefix,note.isSustainNote)
+static func _load_splash_animation(splash: NoteSplash,prefix: StringName) -> bool:
 	var data = splash.splashData.data.get(prefix)
-	if !data: data = splash.splashData.data.get(&'default'); if !data: return
+	if !data: data = splash.splashData.data.get(&'default'); if !data: return false
+	
 	if data is Array: data = data.pick_random()
 	
 	var asset = data.get(&'assetPath')
-	if !asset: asset = splash.splashData.assetPath; if !asset: return
+	
+	if !asset: asset = splash.splashData.assetPath; if !asset: return false
 	
 	splash.image.texture = Paths.texture(asset)
 	
-	if !splash.image.texture: return
+	if !splash.image.texture: return false
 	
 	var offsets = splash.splashData.get(&'offsets',Vector2.ZERO)
+	var scale = data.get(&'scale',splash.splashData.get(&'scale',1.0))
 	
 	if !splash.holdSplash:
-		var prefix_anim = data.prefix; if !prefix_anim: return
+		var prefix_anim = data.get(&'prefix'); if !prefix_anim: return false
 		splash.animation.addAnimByPrefix(&'splash',prefix_anim,24.0,false)
-		splash.addAnimOffset(&'splash',data.get(&'offsets',offsets)+SplashOffset)
-		return
-	
+		splash.offset = data.get(&'offsets',offsets)+SplashOffset
+		splash.scale = Vector2(scale,scale)
+		return true
+
 	for i in HOLD_ANIMATIONS:
 		var anim_data = data.get(i)
 		if !data: continue
@@ -111,3 +126,4 @@ static func addSplashAnimation(splash: NoteSplash,prefix: StringName) -> void:
 		splash.animation.addAnimByPrefix(i,sprefix,24.0,i==&'hold')
 		splash.animation.auto_loop = true
 		splash.addAnimOffset(i,anim_data.get(&'offsets',offsets))
+	return true

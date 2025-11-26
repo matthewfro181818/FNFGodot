@@ -541,7 +541,7 @@ static func startTween(tag: String, object: Variant, what: Dictionary,time = 1.0
 		var split = Reflect._find_object_with_split(object)
 		object = split[0]
 		if !object: return
-		if split[1]: var split_join = ":".join(split[1]); for i in what.keys(): DictionaryUtils.rename_key(what,i,split_join+':'+i)
+		if split[1]: var split_join = ":".join(split[1]); for i in what.keys(): DictUtils.rename_key(what,i,split_join+':'+i)
 	
 	if !object: return
 	

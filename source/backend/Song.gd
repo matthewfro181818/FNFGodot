@@ -237,7 +237,7 @@ static func _clear():
 
 static func set_song_directory(songName: StringName, difficulty: StringName, folder: StringName, json: StringName, audio_suffix: StringName):
 	if !songName or !difficulty: return
-	if !songs_dir.has(songName): songs_dir[songName] = DictionaryUtils.getDictsTyped({},TYPE_STRING_NAME)
+	if !songs_dir.has(songName): songs_dir[songName] = DictUtils.getDictTyped({},TYPE_STRING_NAME)
 	var data: Dictionary[StringName, Variant] = songs_dir[songName]
 	data[difficulty] = {
 		&'folder': folder,

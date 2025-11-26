@@ -1,11 +1,9 @@
 
 @icon("res://icons/note.svg")
-##The Note Base Class
-extends "res://source/objects/Notes/NoteBase.gd"
-
+extends "NoteBase.gd" ##The Note Base Class
 #region Constants
-const NoteSplash = preload("res://source/objects/Notes/NoteSplash.gd")
-const StrumNote = preload("res://source/objects/Notes/StrumNote.gd")
+const NoteSplash = preload("uid://cct1klvoc2ebg")
+const StrumNote = preload("uid://coipwnceltckt")
 
 const _rating_string: Array = [&'marvellous',&'sick',&'good',&'bad',&'shit']
 const _ratings_length: int = 4 #_rating_string.size()
@@ -22,7 +20,7 @@ const key_actions: Array = [
 #endregion
 
 #region Static Vars
-static var _rating_offset: Array[float] = [-1.0,45.0,130.0,150.0]
+static var _rating_offset: PackedFloat32Array = [-1.0,45.0,130.0,150.0]
 static var noteStylesLoaded: Dictionary
 static var miraculousRating: bool
 #endregion
@@ -34,11 +32,11 @@ var copyAlpha: bool = true ##If [code]true[/code], the note will follow the alph
 var copyScale: bool ##If [code]true[/code], the note will follow the scale from his [member strum].
 #endregion
 
-var _is_processing: bool = true
+var _is_processing: bool
 
 #region Sustain Vars
 var isSustainNote: bool ##If the note is a Sustain. See also ["source/objects/NoteSustain.gd"]
-var isEndSustain: bool: set = setEndSustain
+var isEndSustain: bool
 var sustainLength: float  ##The Sustain time
 #endregion
 
@@ -98,6 +96,7 @@ var distance: float: set = setDistance  ##The distance between the note and the 
 var real_distance: float
 
 var canBeHit: bool  ##If the note can be hit
+var hitAnim: StringName = &"confirm"
 
 var wasHit: bool
 var judgementTime: float = INF ##Used in ModchartEditor
@@ -120,17 +119,10 @@ var ratingDisabled: bool ##Disable Rating. If [code]true[/code], the rating will
 #endregion
 
 
-func _enter_tree() -> void: 
-	if !strumNote: return
-	strumNote.mult_speed_changed.connect(_update_note_speed)
-	_update_note_speed()
-
-func _exit_tree() -> void: if strumNote: strumNote.mult_speed_changed.disconnect(_update_note_speed)
 
 
-func _init(data: int = 0) -> void:
-	noteData = data
-	super._init()
+
+func _init(data: int = 0) -> void: noteData = data; super._init()
 
 func updateNote() -> void:
 	distance = (strumTime - Conductor.songPositionDelayed)
@@ -158,18 +150,18 @@ func followStrum(strum: StrumNote = strumNote) -> void:
 	if copyAlpha: modulate.a = strumNote.modulate.a * multAlpha
 
 func reloadNote() -> void:
-	var dir = directions[noteData]
-	
 	noteScale = styleData.get(&'scale',NoteStyleData.DEFAULT_NOTES_SCALE)
-	var data = styleData.data.get(dir)
-	if data:
-		if !data.prefix: return
-		animation.addAnimByPrefix(&'static', data.prefix,data.get(&'fps',24.0),true)
-		noteScale = data.get(&'scale',noteScale)
+	var data = styleData.data.get(_get_data_animation_name())
+	if data: _reload_note_from_data(data)
 	else: _reload_note_without_data()
 	setGraphicScale(Vector2(noteScale,noteScale))
 
-func _reload_note_without_data():
+func _reload_note_from_data(data: Dictionary) -> void:
+	noteScale = data.get(&'scale',noteScale)
+	var prefix = data.get(&'prefix')
+	if prefix: animation.addAnimByPrefix(&'static', prefix, data.get(&'fps',24.0), true)
+
+func _reload_note_without_data() -> void:
 	var cut = imageSize/Vector2(Song.keyCount,5)
 	setNoteRect(
 		Rect2(
@@ -178,7 +170,13 @@ func _reload_note_without_data():
 		)
 	)
 
+func _get_data_animation_name() -> StringName:
+	var _name = directions[noteData]
+	if styleData.data.has(_name): return _name
+	return &'default'
+
 func resetNote() -> void: ##Reset Note values when spawned.
+	distance = 5000.0
 	judgementTime = INF
 	wasHit = false
 	_is_processing = true
@@ -187,10 +185,7 @@ func resetNote() -> void: ##Reset Note values when spawned.
 	noteGroup = null
 	material = null
 	ignoreNote = false
-
-func killNote() -> void: ##Delete the note from the scene.
-	_is_processing = false
-	kill()
+	splashName = &"noteSplash"
 
 #region Updaters
 func _update_distance() -> void: real_distance = distance*_real_note_speed
@@ -213,7 +208,6 @@ func setNoteSpeed(_speed: float) -> void:
 	_update_note_speed()
 
 func setNoteData(data: int): super.setNoteData(data); splashPrefix = directions[data]
-func setEndSustain(is_end: bool) -> void: isEndSustain = is_end
 
 func setDistance(dist: float) -> void: distance = dist; _update_distance()
 
@@ -228,3 +222,15 @@ func setStrum(strum: StrumNote) -> void:
 	strumNote = strum
 	if in_tree: strum.mult_speed_changed.connect(_update_note_speed); _update_note_speed()
 #endregion
+
+func _on_hit() -> void: kill(); wasHit = true;
+
+func _enter_tree() -> void: 
+	_is_processing = true
+	if !strumNote: return
+	strumNote.mult_speed_changed.connect(_update_note_speed)
+	_update_note_speed()
+
+func _exit_tree() -> void: 
+	_is_processing = false
+	if strumNote: strumNote.mult_speed_changed.disconnect(_update_note_speed)

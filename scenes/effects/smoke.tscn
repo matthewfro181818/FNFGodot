@@ -42,7 +42,7 @@ func _ready():
 
 [node name="Smoke" type="Sprite2D"]
 material = SubResource("ShaderMaterial_v4g5g")
-scale = Vector2(1278, 1)
+scale = Vector2(1277, 1)
 texture = SubResource("NoiseTexture2D_jahxy")
 centered = false
 script = SubResource("GDScript_8prmg")

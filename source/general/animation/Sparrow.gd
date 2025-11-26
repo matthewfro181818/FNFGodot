@@ -1,13 +1,5 @@
-static var _xml_parser: XMLParser = XMLParser.new()
-static var sparrows_loaded: Dictionary[String,Dictionary] = {}
-
-const region = StringName('region_rect')
-const size = StringName('size')
-const rotation = StringName('rotation')
-const frameSize = StringName('frameSize')
-const pivot = StringName('pivot_offset')
-const position = StringName('position')
-const frameCenter = StringName('frameCenter')
+static var parser: XMLParser = XMLParser.new()
+static var sparrows_loaded: Dictionary[String,Dictionary]
 
 const deg_90 = deg_to_rad(-90)
 
@@ -19,70 +11,60 @@ const deg_90 = deg_to_rad(-90)
 ##[/codeblock]
 static func loadSparrow(file: String) -> Dictionary[StringName,Array]:
 	if !file.ends_with('.xml'): file += '.xml'
-	if sparrows_loaded.has(file): return sparrows_loaded[file]
-	if !FileAccess.file_exists(file):return {}
-	
-	var sparrow: Dictionary[StringName,Array] = {}
-	_xml_parser.open(file)
-	
-	while _xml_parser.read() == OK:
-		if _xml_parser.get_node_type() != XMLParser.NODE_ELEMENT: continue
-		var xmlName: StringName = _xml_parser.get_named_attribute_value_safe('name')
-		if !xmlName: continue;
+	var sparrow: Dictionary[StringName,Array] = sparrows_loaded.get(
+		file,
+		Dictionary({},TYPE_STRING_NAME,&'',null,TYPE_ARRAY,&"",null)
+	)
+	if sparrow: return sparrow
+	if !FileAccess.file_exists(file): return {}
+	parser.open(file)
+	while parser.read() == OK:
+		if parser.get_node_type() != XMLParser.NODE_ELEMENT: continue
+		var xmlName: StringName = parser.get_named_attribute_value_safe('name')
+		if !xmlName:  continue;
 
-		var frame: int = xmlName.right(4).to_int()
-		
-		##Remove frame from name
+		#var frame: int = xmlName.right(4).to_int()
 		xmlName = xmlName.left(-4)
+		
 		var animationFrames: Array[Dictionary] = sparrow.get_or_add(
 			xmlName,
-			Array([],TYPE_DICTIONARY,'',null)
+			Array([],TYPE_DICTIONARY,&'',null)
 		)
 		
 		var region_data: Rect2 = Rect2(
-				float(_xml_parser.get_named_attribute_value('x')),
-				float(_xml_parser.get_named_attribute_value('y')),
-				float(_xml_parser.get_named_attribute_value('width')),
-				float(_xml_parser.get_named_attribute_value('height'))
+			parser.get_named_attribute_value('x').to_float(),
+			parser.get_named_attribute_value('y').to_float(),
+			parser.get_named_attribute_value('width').to_float(),
+			parser.get_named_attribute_value('height').to_float()
 		)
-		
-		#Frame Data
-		var s = region_data.size
+		var s: Vector2 = region_data.size
 		var f_s: Vector2 = s
-		var r: float = 0.0
-		var p: Vector2 = Vector2.ZERO
+		var r: float
+		var p: Vector2
 		
-		if _xml_parser.get_named_attribute_value_safe('rotated') == 'true':
+		if parser.get_named_attribute_value_safe('rotated') == 'true':
 			r = deg_90
 			p.y += s.x
 			s = Vector2(s.y,s.x)
 		
-		var frameData: Dictionary = {
-			region: region_data,
-			position: p,
-			size: s,
-			rotation: r
-		}
+		var frameData: Dictionary = {&"region_rect": region_data, &"position": p, &"size": s, &"rotation": r}
 		
-		if _xml_parser.has_attribute('frameX'):
-			frameData[position] += -Vector2(
-				float(_xml_parser.get_named_attribute_value('frameX')),
-				float(_xml_parser.get_named_attribute_value('frameY'))
+		if parser.has_attribute('frameX'):
+			frameData[&"position"] -= Vector2(
+				parser.get_named_attribute_value('frameX').to_float(),
+				parser.get_named_attribute_value('frameY').to_float()
 			)
-			f_s =  Vector2(
-				float(_xml_parser.get_named_attribute_value('frameWidth')),
-				float(_xml_parser.get_named_attribute_value('frameHeight'))
+			f_s =  Vector2(parser.get_named_attribute_value('frameWidth').to_float(),
+				parser.get_named_attribute_value('frameHeight').to_float()
 			)
-			frameData[frameSize] = f_s
+			frameData[&"frameSize"] = f_s
 		
 		
-		
-		var frames = animationFrames.size()
-		if frames == frame:  animationFrames.append(frameData); continue
-		
-		while frames <= frame: animationFrames.append({}); frames += 1
-		animationFrames[frame] = frameData
-	
-	for i in sparrow.values(): if i and !i[0]: i.remove_at(0)
+		animationFrames.append(frameData)
+		#var frames = animationFrames.size()
+		#if frames == frame: animationFrames.append(frameData); continue
+		#while frames <= frame: animationFrames.append({}); frames += 1
+		#animationFrames[frame] = frameData
+	#for i in sparrow.values(): if i and !i[0]: i.remove_at(0)
 	sparrows_loaded[file] = sparrow
 	return sparrow

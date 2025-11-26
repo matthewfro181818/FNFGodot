@@ -134,12 +134,7 @@ func _ready():
 	
 	health = 1.0
 	
-	if splashesEnabled: 
-		Paths.image(SONG.get('splashType') if SONG.get('splashType') else 'noteSplashes/noteSplashes')
-	
 	if !isCameraOnForcedPos: moveCamera(detectSection())
-	
-	
 	#Set Signals
 	Conductor.beat_hit.connect(onBeatHit)
 	Conductor.section_hit.connect(onSectionHit)
@@ -318,6 +313,13 @@ func reloadNotes():
 		FunkinGD.addScript('custom_notetypes/'+i)
 	super.reloadNotes()
 
+func reloadNote(note: Note):
+	super.reloadNote(note)
+	if !note.noteType: return
+	var path = 'custom_notetypes/'+note.noteType+'.gd'
+	FunkinGD.callScript('assets/'+path,&'onLoadThisNote',note)
+	FunkinGD.callScript(path,&'onLoadThisNote',note)
+	FunkinGD.callOnScripts(&'onLoadNote',note)
 func loadNotes():
 	super.loadNotes()
 	if !loadEvents: return
@@ -332,9 +334,10 @@ func loadNotes():
 	eventNotes = EventNoteUtils.loadEvents(events_to_load)
 	_is_first_event_load = true
 
-func updateNote(note):
+func updateNote(note: Note) -> bool:
+	FunkinGD.callOnScripts(&'onPreUpdateNote', note)
 	var _return = super.updateNote(note)
-	FunkinGD.callOnScripts(&'onUpdateNote',[note])
+	FunkinGD.callOnScripts(&'onUpdateNote', note)
 	return _return
 
 func updateNotes() -> void: #Function from StrumState
@@ -512,10 +515,7 @@ func restartSong(absolute: bool = true):
 	if absolute: reloadPlayState(); return
 	
 	generateMusic = false
-	var tween = create_tween().tween_property(
-		Conductor,'songPosition',-Conductor.stepCrochet*24.0,1.0
-	).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_SINE)
-	tween.finished.connect(
+	TweenService.createTween(self,{&'songPosition': -Conductor.stepCrochet*24.0},1.0,'sineIn').finished.connect(
 		func():
 			for note in notes.members: note.kill()
 			notes.members.clear()
@@ -723,8 +723,7 @@ func setHealthBarAngle(angle: float):
 	_update_icons_cos_sin()
 	updateIconsPivot()
 
-func _update_icons_cos_sin() -> void:
-	_icons_cos_sin = Vector2(cos(healthBar.rotation),sin(healthBar.rotation))
+func _update_icons_cos_sin() -> void: _icons_cos_sin = Vector2(cos(healthBar.rotation),sin(healthBar.rotation))
 #endregion
 
 #region Setters

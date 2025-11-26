@@ -15,9 +15,7 @@ const NoteHit = preload("uid://dx85xmyb5icvh")
 const StrumNote = preload("uid://coipwnceltckt")
 
 const StrumOffset: float = 112.0
-
-static var COMBO_PIXEL_SCALE: Vector2 = Vector2(6,6)
-static var COMBO_SCALE: Vector2 = Vector2(0.8,0.8)
+const NOTE_SPAWN_TIME: float = 1000
 
 static var isModding: bool = true
 static var inModchartEditor: bool
@@ -73,7 +71,7 @@ var current_player_strum: Array = playerStrums.members
 
 var uiGroup: SpriteGroup = SpriteGroup.new() ##Hud Group.
 
-static var unspawnNotes: Array[Note]##Unspawn notes.
+static var unspawnNotes: Array[Note] ##Unspawn notes.
 var _unspawnNotesLength: int
 var _unspawnIndex: int
 var _respawnIndex: int
@@ -81,11 +79,11 @@ var respawnNotes: bool
 var notes: SpriteGroup = SpriteGroup.new()
 
 
-const NOTE_SPAWN_TIME: float = 1000
 
 var noteSpawnTime: float = NOTE_SPAWN_TIME
 
 var hitNotes: Array[Note]
+
 var canHitNotes: bool = true
 
 var _splashes_loaded: Dictionary
@@ -126,7 +124,6 @@ signal hit_note
 func _init(json_file: StringName = &'', song_difficulty: StringName = &''):
 	add_child(uiGroup)
 	uiGroup.name = &'uiGroup'
-	
 	
 	song_json_file = json_file.get_file()
 	difficulty = song_difficulty
@@ -273,39 +270,33 @@ func getDefaultStrumY(downscroll: bool = downScroll) -> float: return ScreenUtil
 
 func updateStrumsY() -> void:
 	var strumY = getDefaultStrumY()
-	var index = 0
-	while index < defaultStrumPos.size(): defaultStrumPos[index].y = strumY; index += 1
-	
-func reset_strums_state():
-	for i in (keyCount*2):
-		var strum = strumLineNotes.members[i]
-		strum._position = defaultStrumPos[i]
-		strum.modulate.a = defaultStrumAlpha[i]
+	var index = defaultStrumPos.size()
+	while index: index -= 1; defaultStrumPos[index].y = strumY; 
 
 func _create_strums() -> void:
-	for i in strumLineNotes.members: 
-		if i.get_parent(): i.get_parent().remove_child(i)
-		i.queue_free()
+	for i in strumLineNotes.members: i.queue_free()
 	
 	strumLineNotes.members.clear()
 	playerStrums.members.clear()
 	opponentStrums.members.clear()
 	
 	updateStrumsPosition()
-	var i = 0
-	#Opponent Notes
+	var i: int = 0
+	#Opponent Strums
 	while i < keyCount:
 		var strum = createStrum(i,true,defaultStrumPos[i])
 		strum.mustPress = playAsOpponent and !botplay
 		strum.modulate.a = defaultStrumAlpha[i]
 		i += 1
+	
+	#Player Strums
 	i = keyCount
-	var key_count = keyCount*2.0
-	while i < key_count:
-		var strum = createStrum(i-keyCount,false,defaultStrumPos[i])
+	var length = i*2
+	while i < length:
+		var strum = createStrum(i-length,false,defaultStrumPos[i])
 		strum.mustPress = !playAsOpponent and !botplay
 		strum.modulate.a = defaultStrumAlpha[i]
-		i += 1
+		i +=1
 
 func createStrum(i: int, opponent_strum: bool = true, pos: Vector2 = Vector2.ZERO) -> StrumNote:
 	var strum = StrumNote.new(i)
@@ -321,25 +312,27 @@ func createStrum(i: int, opponent_strum: bool = true, pos: Vector2 = Vector2.ZER
 	strumLineNotes.add(strum)
 	strum.name = &"StrumNote"
 	return strum
+
+func _update_strum_must_press() -> void:
+	var strums = strumLineNotes.members
+	if !strums: return
+	
+	var index: int = strums.size()
+	while index:
+		index -= 1
+		if botplay: strums[index].mustPress = false; continue
+		if index < keyCount: strums[index].mustPress = playAsOpponent
+		else: strums[index].mustPress = !playAsOpponent
+
+func _strum_confirm_from_note(note: Note) -> void:
+	var strum: StrumNote = note.strumNote; if !strum: return
+	if !note.isSustainNote or note.isEndSustain: strum.strumConfirm(note.hitAnim); return
+	strum.hitTime = 0.0; strum.animation.play(note.hitAnim,true); strum.return_to_static_on_finish = false
 #endregion
 
 func _process(_d) -> void:  if generateMusic: _songPos = Conductor.songPositionDelayed; updateNotes()
 
-#region Note Functions
-func updateRespawnNotes():
-	while _respawnIndex:
-		var note = unspawnNotes[_respawnIndex-1]
-		if !note: _respawnIndex -= 1; continue
-		var time = note.strumTime - _songPos
-		
-		if time > 0 and time < noteSpawnTime: 
-			note.resetNote()
-			spawnNote(note)
-			updateNote(note)
-			_respawnIndex -= 1
-			continue
-		break
-
+#region Note Methods
 func updateNotes():
 	_check_unspawn_notes()
 	_check_respawn_notes()
@@ -354,7 +347,7 @@ func updateNotes():
 			note_index -= 1
 			var note = members[note_index]
 			if note.strumTime - _songPos > noteSpawnTime: note.kill(); _unspawnIndex -= 1
-			elif updateNote(note): continue
+			elif !updateNote(note): continue
 			members.remove_at(note_index)
 	else:
 		while note_index:
@@ -362,7 +355,7 @@ func updateNotes():
 			if !updateNote(members[note_index]): members.remove_at(note_index)
 	if !botplay and canHitNotes: _check_hit_notes()
 
-func _check_unspawn_notes():
+func _check_unspawn_notes() -> void:
 	if !unspawnNotes: return
 	while _unspawnIndex < _unspawnNotesLength:
 		var unspawn: Note = unspawnNotes[_unspawnIndex]
@@ -384,14 +377,9 @@ func _check_hit_notes() -> void:
 		var i = hitNotes[index]
 		if i: hitNotes[index] = null; if Input.is_action_just_pressed(i.hit_action): preHitNote(i)
 
-#region Note Methods
+
 func spawnNote(note: Note) -> void: ##Spawns the note
-	if !note: return
-	if note.strumTime < note.missOffset: noteMiss(note); return
-	if !note.noteGroup: addNoteToGroup(note,notes); return
-	notes.members.append(note)
-	note.groups.append(notes)
-	addNoteToGroup(note,note.noteGroup)
+	if note: addNoteToGroup(note,note.noteGroup if note.noteGroup else notes)
 	
 func addNoteToGroup(note: Note, group: Node) -> void:
 	if group is SpriteGroup:
@@ -400,35 +388,34 @@ func addNoteToGroup(note: Note, group: Node) -> void:
 		return
 	
 	group.add_child(note)
-	if note.isSustainNote and note.noteGroup == note.noteParent.noteGroup: group.move_child(note,note.noteParent.get_index())
+	if note.isSustainNote: group.move_child(note,0)
 
-func updateNote(n: Note):
+func updateNote(n: Note) -> bool:
 	if !n or !n._is_processing: return false
 	
-	var strum = n.strumNote
-	var playerNote: bool
-	playerNote = n.autoHit or !botplay and (strum.mustPress if strum else false)
+	var isSus: bool = n.isSustainNote
+	var opponentNote: bool = n.autoHit or botplay or !isPlayerNote(n)
 	n.noteSpeed = songSpeed
 	n.updateNote()
 	
-	if not (n.isSustainNote and n.isBeingDestroyed) and n.strumTime - _songPos <= n.missOffset:
-		if not n.missed and playerNote and not n.ignoreNote: noteMiss(n) 
+	if !(isSus and n.isBeingDestroyed) and n.distance <= n.missOffset:
+		if not n.missed and !opponentNote and not n.ignoreNote: noteMiss(n) 
 		return true
 	
-	if !n.canBeHit: return true
-	if !canHitNotes: return true
+	if !n.canBeHit or !canHitNotes: return true
 	
-	if !playerNote:
-		if not n.ignoreNote and (n.isSustainNote or n.distance <= 0.0): preHitNote(n)
+	if opponentNote:
+		if not n.ignoreNote and (isSus or n.distance <= 0.0): preHitNote(n)
 		return true
 	
-	if n.isSustainNote:
-		if Input.is_action_pressed(n.noteParent.hit_action if n.isSustainNote else n.hit_action): preHitNote(n)
+	if isSus:
+		var hit_action = n.noteParent.hit_action
+		if Input.is_action_pressed(hit_action): preHitNote(n)
+		elif !n.isEndSustain and Input.is_action_just_released(hit_action): noteMiss(n,false)
 		return true
 	
 	var l = hitNotes[n.noteData]
 	if !l or absf(n.distance) < absf(l.distance): hitNotes[n.noteData] = n
-	elif n.distance == l.distance and Input.is_action_just_pressed(n.hit_action): preHitNote(n)
 	return true
 
 func preHitNote(note: Note):
@@ -440,31 +427,27 @@ func preHitNote(note: Note):
 
 func hitNote(note: Note) -> void: ##Called when the hits a [NoteBase] 
 	if !note: return
-	var strumAnim: StringName = &'confirm'
-	if note.mustPress != playAsOpponent and note.isEndSustain: strumAnim = &'press'
+	var playerNote = isPlayerNote(note)
 	var strum: StrumNote = note.strumNote
-	
 	if note.isEndSustain: 
-		var holdSplash = grpNoteHoldSplashes.get(strum.get_instance_id())
-		if holdSplash: holdSplash.animation.play(&'end')
-	
-	if note.strumConfirm: _strum_confirm(strum,note,strumAnim)
+		if !playerNote: _hide_hold_splash_from_note(note)
+		else: 
+			var holdSplash: NoteSplash = grpNoteHoldSplashes.get(strum.get_instance_id()); 
+			if holdSplash: 
+				holdSplash.animation.play(&'end')
+				holdSplash.animation.curAnim.animation_finished.connect(_hide_hold_splash_from_note.bind(note),CONNECT_ONE_SHOT)
 	if splashAllowed(note): createSplash(note);
-	note.killNote()
+	note._on_hit()
+	_strum_confirm_from_note(note)
 
 func isPlayerNote(note: Note) -> bool: return note.mustPress != playAsOpponent
-#endregion
 
-func _strum_confirm(strum: StrumNote,note: Note, confirmAnim: StringName = &"confirm"):
-	if !strum: return
-	
-	if strum.mustPress: strum.animation.play(confirmAnim,true); return
-	if !note.isSustainNote or note.isEndSustain: 
-		strum.strumConfirm(confirmAnim); strum.return_to_static_on_finish = true; return
-	
-	strum.return_to_static_on_finish = note.isEndSustain
-	strum.hitTime = 0.0
-	strum.animation.play(confirmAnim,true)
+func noteMiss(note: Note, kill_note: bool = true) -> void: ##Called when the player miss a [Note]
+	if !note:return
+	note.missed = true
+	note.judgementTime = _songPos
+	if note.isSustainNote: _disable_note_sustains(note.noteParent); _hide_hold_splash_from_note(note)
+	if kill_note: note.kill()
 
 func reloadNotes() -> void: 
 	var index: int = unspawnNotes.size()
@@ -476,32 +459,11 @@ func reloadNote(note: Note):
 	note.strumNote = noteStrum
 	note.isPixelNote = isPixelStage
 	note.resetNote()
-	if note.isSustainNote: if splashHoldStyle: note.splashStyle = splashHoldStyle
-	else: if splashStyle: note.splashStyle = splashStyle
 	
-	if note.noteType: 
-		var path = 'custom_notetypes/'+note.noteType+'.gd'
-		FunkinGD.callScript(
-			'assets/'+path,
-			&'onLoadThisNote',
-			[note]
-		)
-		FunkinGD.callScript(
-			path,
-			&'onLoadThisNote',
-			[note]
-		)
-	FunkinGD.callOnScripts(&'onLoadNote',[note])
-
-##Called when the player miss a [Note]
-func noteMiss(note, kill_note: bool = true) -> void:
-	if !note:return
-	note.missed = true
-	note.judgementTime = _songPos
-	if ClientPrefs.data.notHitSustainWhenMiss: _disable_note_sustains(note)
-	if kill_note: note.kill()
+	note.splashStyle = splashHoldStyle if note.isSustainNote else note.splashStyle
 
 func _disable_note_sustains(note: Note) -> void:
+	if !note: return
 	for sus in note.sustainParents: sus.blockHit = true; sus.ignoreNote = true; sus.modulate.a = 0.3
 #endregion
 
@@ -511,7 +473,7 @@ func createSplash(note) -> NoteSplash: ##Create Splash
 	if !strum or !strum.visible: return
 	
 	var splashParent = note.splashParent
-	var splash: NoteSplash = _check_splash(note.splashStyle,note.splashName,note.splashPrefix)
+	var splash: NoteSplash = _check_splash_from_note(note)
 	if !splash:
 		splash = _create_splash_from_note(note); if !splash: return
 		if splashParent: grpNoteSplashes.members.append(splash); splashParent.add_child(splash)
@@ -528,26 +490,43 @@ func createSplash(note) -> NoteSplash: ##Create Splash
 	return splash
 
 func _create_splash_from_note(note: Note) -> NoteSplash:
-	var splashStyle: StringName = note.splashStyle
-	var prefix: StringName = note.splashPrefix
-	var splash = NoteSplash.new()
+	if !note: return
+	var splash = NoteSplash.loadSplashFromNote(note); if !splash: return
 	splash.strum = note.strumNote
-	splash.holdSplash = note.isSustainNote
-	if !splash.loadSplash(splashStyle,prefix): return
 	_get_splash_storage(note.splashStyle,note.splashName,note.splashPrefix).append(splash)
 	return splash
 
 func _get_splash_storage(style: StringName, name: StringName, prefix: StringName) -> Array:
 	return _splashes_loaded.get_or_add(style,{}).get_or_add(name,{}).get_or_add(prefix,[])
+
+func _check_splash_from_note(note: Note) -> NoteSplash:
+	if !note.isSustainNote: return _check_splash(note.splashStyle,note.splashName,note.splashPrefix)
+	if !note.strumNote: return
 	
+	var splash: NoteSplash = grpNoteHoldSplashes.get(note.strumNote.get_instance_id())
+	if !splash or \
+		splash.splashStyle != note.splashStyle or \
+		splash.splashPrefix != note.splashPrefix or \
+		splash.splashName != note.splashName: return
+	return splash
+	
+	
+
 func _check_splash(style: StringName, splash_name: StringName, prefix: StringName) -> NoteSplash:
-	for s in _get_splash_storage(style,splash_name,prefix): if !s.visible: return s
+	print(_get_splash_storage(style,splash_name,prefix))
+	for s in _get_splash_storage(style,splash_name,prefix): 
+		if !s.visible: return s
 	return
-	
+
 func splashAllowed(n: Note) -> bool:
 	return !n.splashDisabled and splashesEnabled and n.ratingMod <= 1 and\
 			(n.isSustainNote and !n.isEndSustain or (n.mustPress != playAsOpponent or opponentSplashes))
 
+func _hide_hold_splash_from_note(note: Note):
+	if !note or !note.strumNote: return
+	var id = note.strumNote.get_instance_id()
+	var splash = grpNoteHoldSplashes.get(id)
+	if splash: splash.visible = false; grpNoteHoldSplashes[id] = null
 #endregion
 
 func destroy(absolute: bool = true): ##Remove the state
@@ -561,32 +540,16 @@ func destroy(absolute: bool = true): ##Remove the state
 		NoteStyleData.styles_loaded.clear()
 	for note in notes.members: note.kill()
 
-func updateStrumsMustPress() -> void:
-	var strums = strumLineNotes.members
-	if !strums: return
-	
-	var index: int = 0
-	while index < strums.size():
-		if botplay: strums[index].mustPress = false; continue
-		if index < keyCount: strums[index].mustPress = playAsOpponent
-		else: strums[index].mustPress = !playAsOpponent
-		index += 1
-
 
 #region Setters
-func _set_botplay(is_botplay: bool) -> void:
-	botplay = is_botplay
-	if !is_botplay: updateStrumsMustPress()
-	for i in strumLineNotes.members: i.mustPress = false
+func _set_botplay(is_botplay: bool) -> void: botplay = is_botplay; _update_strum_must_press()
 
-func set_song_speed(value):
-	songSpeed = value
-	noteSpawnTime = NOTE_SPAWN_TIME/(value/2.0)
+func set_song_speed(value): songSpeed = value; noteSpawnTime = NOTE_SPAWN_TIME/(value/2.0)
 
 func _set_play_opponent(isOpponent: bool = playAsOpponent) -> void:
 	if playAsOpponent == isOpponent: return
 	playAsOpponent = isOpponent
-	updateStrumsMustPress()
+	_update_strum_must_press()
 	current_player_strum = (opponentStrums if isOpponent else playerStrums).members
 	if middleScroll: updateStrumsPosition()
 	
@@ -620,8 +583,3 @@ func clear_splashes():
 	grpNoteHoldSplashes.clear()
 	grpNoteSplashes.members.clear()
 	_splashes_loaded.clear()
-	
-
-#region Static Methods
-
-#endregion

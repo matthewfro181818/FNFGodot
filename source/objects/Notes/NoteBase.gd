@@ -35,7 +35,7 @@ func loadFromStyle(noteStyle: String,prefix: String = stylePrefix):
 	isPixelNote = styleData.get(&'isPixel',false)
 	texture = styleData.assetPath
 	
-func _update_style_data() -> void: styleData = NoteStyleData.getStyleData(styleName)
+func _update_style_data() -> void: styleData = NoteStyleData.getStyleData(styleName,&'notes')
 
 ##Reload the Note animation and his texture.
 @abstract func reloadNote() -> void

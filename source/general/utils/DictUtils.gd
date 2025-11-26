@@ -1,4 +1,4 @@
-class_name DictionaryUtils
+class_name DictUtils
 
 const EmptyDict: Dictionary = {}
 static func merge_existing(dic: Dictionary, to: Dictionary) -> Dictionary:
@@ -33,7 +33,7 @@ static func convertKeysToStringNames(dict: Dictionary, recursive: bool = false) 
 			dict.erase(i)
 			dict[key] = val
 
-static func getDictsTyped(dict: Dictionary, key_type: Variant.Type = TYPE_NIL, value_type: Variant.Type = TYPE_NIL) -> Dictionary:
+static func getDictTyped(dict: Dictionary, key_type: Variant.Type = TYPE_NIL, value_type: Variant.Type = TYPE_NIL) -> Dictionary:
 	return Dictionary(
 		dict,
 		key_type,&'',null,
