@@ -160,12 +160,15 @@ func signCharacter(character: Character, note: Note):
 		if gf: gf.autoDance = character_auto_dance
 	
 	var animNote = singAnimations[note.noteData]
-	
-	var anim = character.animation
+	var realAnim = animNote
+	var anim_player = character.animation
+	var suffix = note.animSuffix
+	if altSection and !suffix.ends_with('-alt'): suffix += '-alt'
+	if suffix: realAnim += suffix; if !anim_player.has_animation(realAnim): realAnim = animNote
 	character.holdTimer = 0.0
 	character.heyTimer = 0.0
 	character.specialAnim = false
-	if !note.animSuffix or !anim.play(animNote+note.animSuffix,true): anim.play(animNote,true)
+	anim_player.play(realAnim,true)
 func noteMiss(note: Note, character: Variant = getCharacterNote(note)):
 	if character: character.animation.play(singAnimations[note.noteData]+'miss',true)
 	super.noteMiss(note,character)

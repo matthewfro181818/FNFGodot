@@ -96,7 +96,7 @@ var distance: float: set = setDistance  ##The distance between the note and the 
 var real_distance: float
 
 var canBeHit: bool  ##If the note can be hit
-var hitAnim: StringName = &"confirm"
+var hitAnim: StringName ##Strum animation when hit this note, this property is set in StrumState.
 
 var wasHit: bool
 var judgementTime: float = INF ##Used in ModchartEditor

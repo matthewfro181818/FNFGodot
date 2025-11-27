@@ -97,7 +97,8 @@ func getAnimData(animName: StringName) -> Dictionary: return animationsArray.get
 ##[b]OBS:[/b] If the [param animName] as the same from the current animation,
 ##use [method update_anim] to update the property changed.
 func setAnimDataValue(animName: String, property: StringName, value: Variant):
-	var data = animationsArray.get(animName); if data: data[property] = value
+	var data = animationsArray.get(animName); 
+	if data: data[property] = value
 
 func update_anim(anim: StringName = current_animation):
 	var animData = animationsArray[anim]

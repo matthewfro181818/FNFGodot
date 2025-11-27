@@ -215,10 +215,9 @@ func add_anim_offset():
 func get_animation_indices_str(indices = animData.get('frameIndices',[])):
 	var string = ''
 	for i in indices: string += String.num_int64(i)+', '
-	return string.left(-2)	
+	return string.left(-2)
 
 func updateAnimData():
-	print(animData)
 	animationList.text = cur_anim
 	cur_offset = character_node._animOffsets.get(cur_anim,Vector2.ZERO)
 	cur_indices = get_animation_indices_str()

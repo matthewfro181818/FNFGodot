@@ -37,18 +37,20 @@ func _init():
 
 func _ready() -> void:
 	visibility_changed.connect(_on_visibility_changed)
+	if holdSplash: _update_animation_scale()
 	followStrum()
 
 func _on_visibility_changed(): 
-	set_process(visible); 
-	if !visible: return
-	followStrum()
-	_update_position();
-	if holdSplash: 
-		animation.play(&'start',false); _update_animation_scale();
+	process_mode = PROCESS_MODE_INHERIT if visible else PROCESS_MODE_DISABLED; 
+	if visible: followStrum()
+
+func show_splash() -> void:
+	visible = true
+	if holdSplash: animation.play(&'start',false); _update_animation_scale();
 	else: animation.play_random()
 
-func _update_animation_scale() -> void: animation.setAnimDataValue(&'splash-loop',&'speed_scale',minf(100.0/Conductor.stepCrochet,1.5))
+func _update_animation_scale() -> void: 
+	animation.setAnimDataValue(&'hold',&'speed_scale',minf(1.0/Conductor.stepCrochetMs,1.5))
 
 func _set_pixel(isPixel: bool):
 	if isPixel == isPixelSplash: return
@@ -92,8 +94,7 @@ static func loadSplash(style: StringName, splash_name: StringName = &'default', 
 	if !_load_splash_animation(splash,prefix): return null
 	return splash
 
-static func loadSplashFromNote(note: Note) -> NoteSplash:
-	return loadSplash(note.splashStyle,note.splashName,note.splashPrefix,note.isSustainNote)
+static func loadSplashFromNote(note: Note) -> NoteSplash: return loadSplash(note.splashStyle,note.splashName,note.splashPrefix,note.isSustainNote)
 static func _load_splash_animation(splash: NoteSplash,prefix: StringName) -> bool:
 	var data = splash.splashData.data.get(prefix)
 	if !data: data = splash.splashData.data.get(&'default'); if !data: return false

@@ -12,12 +12,16 @@ func _init() -> void:
 	set("theme_override_constants/outline_size",7)
 
 func update() -> void:
-	var songSeconds
+	var pos: float = Conductor.songPosition
 	match style:
-		Styles.TIME_LEFT: songSeconds = int((Conductor.songLength-Conductor.songPosition)/1000)
-		Styles.POSITION: songSeconds = int(Conductor.songPositionSeconds)
+		Styles.TIME_LEFT: text = get_time_text(int(Conductor.songLength-pos)/1000)
+		Styles.POSITION: text = get_time_text(int(Conductor.songPositionSeconds)); return
 		Styles.SONG_NAME: text = Conductor.songJson.song; return
 		Styles.DISABLED: return
+	
+
+static func get_time_text(song_position: int) -> String:
+	var songSeconds = song_position/1000
 	var songMinutes = songSeconds/60
 	songSeconds %= 60
 	
@@ -25,5 +29,4 @@ func update() -> void:
 	songSeconds = String.num_int64(songSeconds)
 	if songMinutes.length() <= 1: songMinutes = '0'+songMinutes
 	if songSeconds.length() <= 1: songSeconds = '0'+songSeconds
-	
-	text = songMinutes+':'+songSeconds
+	return songMinutes+':'+songSeconds

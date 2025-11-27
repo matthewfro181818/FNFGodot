@@ -21,11 +21,14 @@ var _direction_radius: float:
 
 var _direction_lerp: Vector2 = Vector2(0,1) #Used in Notes.gd
 
-var mustPress: bool ##Player Strum
+var mustPress: bool:
+	set(val):
+		mustPress = val
+		return_to_static_on_finish = !val
+		 ##Player Strum
 var hit_action: StringName ##Hit Key
 
 var return_to_static_on_finish: bool = true
-
 @export var default_scale: float = 0.7
 
 @export var isPixelNote: bool ##Pixel Note
@@ -44,17 +47,10 @@ var multSpeed: float = 1.0: set = setMultSpeed ##The note speed multiplier.
 
 ## Time used to determine when the strum should return to the 'static' animation after being hit.
 ## When this reaches 0, the 'static' animation is played.
-var hitTime: float = 0.0
+var hitTime: float
 
 signal mult_speed_changed
 func _init(dir: int = 0):
-	"""
-	shader = rgbShader
-	rgbShader.r = ClientPrefs.arrowRGB[dir][0]
-	rgbShader.g = ClientPrefs.arrowRGB[dir][1]
-	rgbShader.b = ClientPrefs.arrowRGB[dir][2]
-	rgbShader.next_pass = testShader
-	"""
 	super._init(true)
 	data = dir
 	hit_action = NoteHit.getInputActions()[dir]
@@ -62,7 +58,6 @@ func _init(dir: int = 0):
 	offset_follow_scale = true
 	offset_follow_rotation = true
 	animation.animation_finished.connect(_on_animation_finished)
-const _anim_direction: PackedStringArray = ['left','down','up','right']
 
 func reloadStrumNote() -> void: ##Reload Strum Texture Data
 	_animOffsets.clear()
@@ -74,6 +69,7 @@ func reloadStrumNote() -> void: ##Reload Strum Texture Data
 	else: _load_graphic_anims()
 	setGraphicScale(Vector2(default_scale,default_scale))
 
+const _anim_direction: PackedStringArray = ['left','down','up','right']
 func _load_anims_from_prefix() -> void:
 	var type = _anim_direction[data]
 	
@@ -130,8 +126,8 @@ func setDownscroll(down: bool) -> void:
 
 func strumConfirm(anim: StringName = &'confirm'):
 	animation.play(anim,true)
-	hitTime = Conductor.stepCrochet/1000.0
-	return_to_static_on_finish = true
+	hitTime = Conductor.stepCrochetMs
+	return_to_static_on_finish = !mustPress
 
 func _process(delta: float) -> void:
 	super._process(delta)
@@ -143,8 +139,7 @@ func _process(delta: float) -> void:
 		hitTime -= delta
 		if hitTime <= 0.0: hitTime = 0.0; animation.play(&'static')
 
-func _on_animation_finished(anim: StringName):
-	if anim != &'static' and return_to_static_on_finish and !mustPress: animation.play(&'static')
+func _on_animation_finished(anim: StringName):if return_to_static_on_finish and anim != &'static': animation.play(&'static')
 func _property_can_revert(property: StringName) -> bool:
 	match property:
 		&'data',&'styleData': return false

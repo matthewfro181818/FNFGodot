@@ -77,9 +77,6 @@ var _unspawnIndex: int
 var _respawnIndex: int
 var respawnNotes: bool
 var notes: SpriteGroup = SpriteGroup.new()
-
-
-
 var noteSpawnTime: float = NOTE_SPAWN_TIME
 
 var hitNotes: Array[Note]
@@ -326,7 +323,7 @@ func _update_strum_must_press() -> void:
 
 func _strum_confirm_from_note(note: Note) -> void:
 	var strum: StrumNote = note.strumNote; if !strum: return
-	if !note.isSustainNote or note.isEndSustain: strum.strumConfirm(note.hitAnim); return
+	if !strum.mustPress and (!note.isSustainNote or note.isEndSustain): strum.strumConfirm(note.hitAnim); return
 	strum.hitTime = 0.0; strum.animation.play(note.hitAnim,true); strum.return_to_static_on_finish = false
 #endregion
 
@@ -380,7 +377,7 @@ func _check_hit_notes() -> void:
 
 func spawnNote(note: Note) -> void: ##Spawns the note
 	if note: addNoteToGroup(note,note.noteGroup if note.noteGroup else notes)
-	
+
 func addNoteToGroup(note: Note, group: Node) -> void:
 	if group is SpriteGroup:
 		if note.isSustainNote: group.insert(0,note)
@@ -423,6 +420,7 @@ func preHitNote(note: Note):
 	if !note.isSustainNote: note.updateRating()
 	note.wasHit = true
 	note.judgementTime = _songPos
+	note.hitAnim = &'press' if note.isEndSustain and isPlayerNote(note) else &'confirm'
 	hitNote(note)
 
 func hitNote(note: Note) -> void: ##Called when the hits a [NoteBase] 
@@ -433,9 +431,7 @@ func hitNote(note: Note) -> void: ##Called when the hits a [NoteBase]
 		if !playerNote: _hide_hold_splash_from_note(note)
 		else: 
 			var holdSplash: NoteSplash = grpNoteHoldSplashes.get(strum.get_instance_id()); 
-			if holdSplash: 
-				holdSplash.animation.play(&'end')
-				holdSplash.animation.curAnim.animation_finished.connect(_hide_hold_splash_from_note.bind(note),CONNECT_ONE_SHOT)
+			if holdSplash: holdSplash.animation.play(&'end')
 	if splashAllowed(note): createSplash(note);
 	note._on_hit()
 	_strum_confirm_from_note(note)
@@ -459,12 +455,10 @@ func reloadNote(note: Note):
 	note.strumNote = noteStrum
 	note.isPixelNote = isPixelStage
 	note.resetNote()
-	
-	note.splashStyle = splashHoldStyle if note.isSustainNote else note.splashStyle
-
+	if note.isSustainNote: note.splashStyle = splashHoldStyle
+	else: note.splashStyle = note.splashStyle
 func _disable_note_sustains(note: Note) -> void:
-	if !note: return
-	for sus in note.sustainParents: sus.blockHit = true; sus.ignoreNote = true; sus.modulate.a = 0.3
+	if note: for sus in note.sustainParents: sus.blockHit = true; sus.ignoreNote = true; sus.modulate.a = 0.3
 #endregion
 
 #region Splash Methods
@@ -480,7 +474,7 @@ func createSplash(note) -> NoteSplash: ##Create Splash
 		else: grpNoteSplashes.add(splash)
 	else: 
 		splash.strum = strum
-		splash.visible = true
+		splash.show_splash()
 		if splashParent: splash.reparent(splashParent,false)
 		elif splash._is_custom_parent: splash.reparent(grpNoteSplashes,false)
 	
@@ -504,23 +498,20 @@ func _check_splash_from_note(note: Note) -> NoteSplash:
 	if !note.strumNote: return
 	
 	var splash: NoteSplash = grpNoteHoldSplashes.get(note.strumNote.get_instance_id())
-	if !splash or \
-		splash.splashStyle != note.splashStyle or \
-		splash.splashPrefix != note.splashPrefix or \
-		splash.splashName != note.splashName: return
-	return splash
-	
-	
+	if splash and\
+		splash.splashStyle == note.splashStyle and \
+		splash.splashPrefix == note.splashPrefix and \
+		splash.splashName == note.splashName: return splash
+	return _check_splash(note.splashStyle,note.splashName,note.splashPrefix)
+
 
 func _check_splash(style: StringName, splash_name: StringName, prefix: StringName) -> NoteSplash:
-	print(_get_splash_storage(style,splash_name,prefix))
-	for s in _get_splash_storage(style,splash_name,prefix): 
-		if !s.visible: return s
+	for s in _get_splash_storage(style,splash_name,prefix): if !s.visible: return s
 	return
 
 func splashAllowed(n: Note) -> bool:
-	return !n.splashDisabled and splashesEnabled and n.ratingMod <= 1 and\
-			(n.isSustainNote and !n.isEndSustain or (n.mustPress != playAsOpponent or opponentSplashes))
+	if n.isSustainNote: return !n.splashDisabled and splashesEnabled and n.ratingMod <= 1 and !n.isBeingDestroyed
+	return !n.splashDisabled and splashesEnabled and n.ratingMod <= 1 and (isPlayerNote(n) or opponentSplashes)
 
 func _hide_hold_splash_from_note(note: Note):
 	if !note or !note.strumNote: return

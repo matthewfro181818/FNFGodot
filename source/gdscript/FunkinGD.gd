@@ -2,6 +2,7 @@ extends "FunkinInternal.gd"
 class_name FunkinGD
 
 #region Variables
+const TimeLabel = preload("uid://d3x26l4q6bk7j")
 const TweenerObject = preload("uid://b3wombi1g7mtv")
 const TweenerMethod = preload("uid://buyyxjslew1n1")
 
@@ -130,7 +131,7 @@ static var hideHud: bool
 
 #TimeBar
 static var hideTimeBar: bool
-static var timeBarType: String
+static var timeBarType: TimeLabel.Styles
 
 static var shadersEnabled: bool:
 	get(): return ClientPrefs.data.shadersEnabled
@@ -536,7 +537,7 @@ static func textsExits(tag: String) -> bool: return textsCreated.has(tag) ##Chec
 #region Tween Methods
 ##Start Tween. Similar to [method createTween].[br]
 ##[b]OBS:[/b] if [param time] is [code]0.0[/code], this will cause the function to set the values, without any tween.
-static func startTween(tag: String, object: Variant, what: Dictionary,time = 1.0, easing: StringName = &'') -> TweenerObject:
+static func startTween(tag: String, object: Variant, what: Dictionary,time: Variant = 1.0, easing: StringName = &'') -> TweenerObject:
 	if !object is Object:
 		var split = Reflect._find_object_with_split(object)
 		object = split[0]
@@ -544,7 +545,6 @@ static func startTween(tag: String, object: Variant, what: Dictionary,time = 1.0
 		if split[1]: var split_join = ":".join(split[1]); for i in what.keys(): DictUtils.rename_key(what,i,split_join+':'+i)
 	
 	if !object: return
-	
 	for property in what:
 		if (property is NodePath or property.contains(':'))\
 		and object.get_indexed(property) != null or property in object: continue
@@ -553,8 +553,9 @@ static func startTween(tag: String, object: Variant, what: Dictionary,time = 1.0
 		what.erase(property)
 	
 	if time: return startTweenNoCheck(tag,object,what,float(time),easing)
-	for i in what: setProperty(i,what[i],object)
-	
+	for i in what: 
+		if i is NodePath or i.contains(":"): object.set_indexed(i,what[i])
+		else: object.set(i,what[i])
 	return
 
 static func startTweenNoCheck(tag: String,object: Object, what: Dictionary,time: float = 1.0, easing: StringName = &'') -> TweenerObject:
@@ -1054,9 +1055,8 @@ static func getColorFromArray(array: Array, divided_by_255: bool = true) -> Colo
 static func getColorFromName(color_name: String, default: Color = Color.WHITE) -> Color: return Color.from_string(color_name.to_lower(),default)
 #endregion
 
-
-
 #region Internal Methods
+
 #region Signals
 static func _beat_hit() -> void: curBeat = Conductor.beat; callOnScripts(&'onBeatHit')
 static func _step_hit() -> void: curStep = Conductor.step; callOnScripts(&'onStepHit')
@@ -1075,3 +1075,8 @@ static func _clear_scripts(absolute: bool = false):
 	debugMode = false
 	for i in Conductor_Signals: Conductor[i].disconnect(Conductor_Signals[i])
 #endregion
+
+#region Utils
+static func getArrayIndex(array,index: int,default: Variant) -> Variant:
+	if index >= 0 and index < array.size(): return array[index]
+	return default

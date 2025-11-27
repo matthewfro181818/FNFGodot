@@ -21,17 +21,18 @@ static func fragToGd(shaderCode: String) -> String:
 	return shaderCode
 	
 #region Blend Methods
-static func get_blend(blend: String) -> Material:
+static func get_blend(blend: StringName) -> Material:
 	blend = blend.to_lower()
 	if _blends_created.has(blend): return _blends_created[blend]
 	
 	var canvas: Material
 	match blend:
-		'add': canvas = CanvasItemMaterial.new(); canvas.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
-		'mix': canvas = CanvasItemMaterial.new(); canvas.blend_mode = CanvasItemMaterial.BLEND_MODE_MIX
-		'subtract': canvas = CanvasItemMaterial.new(); canvas.blend_mode = CanvasItemMaterial.BLEND_MODE_SUB
-		'premult_alpha': canvas = CanvasItemMaterial.new(); canvas.blend_mode = CanvasItemMaterial.BLEND_MODE_PREMULT_ALPHA
-		'overlay':
+		&'add': canvas = CanvasItemMaterial.new(); canvas.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+		&'mix': canvas = CanvasItemMaterial.new(); canvas.blend_mode = CanvasItemMaterial.BLEND_MODE_MIX
+		&'multiply': canvas = CanvasItemMaterial.new(); canvas.blend_mode = CanvasItemMaterial.BLEND_MODE_MUL
+		&'subtract': canvas = CanvasItemMaterial.new(); canvas.blend_mode = CanvasItemMaterial.BLEND_MODE_SUB
+		&'premult_alpha': canvas = CanvasItemMaterial.new(); canvas.blend_mode = CanvasItemMaterial.BLEND_MODE_PREMULT_ALPHA
+		&'overlay':
 			canvas = ShaderMaterial.new()
 			canvas.shader = Shader.new()
 			canvas.shader.code = "
