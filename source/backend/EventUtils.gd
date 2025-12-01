@@ -77,6 +77,7 @@ static func _get_event_base() -> Dictionary[StringName,Variant]:
 		&'trigger_when_opponent': true,
 		&'trigger_when_player': true
 	}
+
 static func _get_transitions():
 	var trans: PackedStringArray
 	for i in TweenService.transitions:
@@ -91,7 +92,7 @@ static func _get_transitions():
 ##[b]Example:[/b] [code]{"value1": [TYPE_STRING,''], "value2": [TYPE_FLOAT,0.0]}[/code]
 static func get_event_variables(event_name: StringName) -> Dictionary:
 	if event_name in event_variables: return event_variables[event_name]
-	var event_data = Paths.loadJson('custom_events/'+event_name+'.json')
+	var event_data: Dictionary[StringName,Variant] = DictUtils.getDictTyped(Paths.loadJson('custom_events/'+event_name+'.json'),TYPE_STRING_NAME)
 	if !event_data or !event_data.has(&'variables'): return default_variables
 	
 	var variables: Dictionary
@@ -99,9 +100,15 @@ static func get_event_variables(event_name: StringName) -> Dictionary:
 	event_variables[event_name] = variables
 	return variables
 
-static func _get_value_data(value: Dictionary):
-	var type = value.get('type','String')
+static func get_event_default_values(event_name: StringName) -> Dictionary[StringName,Variant]:
+	var default: Dictionary[StringName,Variant]
+	var variables = get_event_variables(event_name)
+	for i in variables: default[i] = variables[i].default_value
+	return default
 
+static func _get_value_data(value: Dictionary):
+	var type: StringName = value.get('type','String')
+	
 	var value_type: int
 	var options: Array = value.get('options',[])
 	match type:
@@ -114,22 +121,27 @@ static func _get_value_data(value: Dictionary):
 	if !default_value or typeof(default_value) != value_type:
 		default_value = MathUtils.get_new_value(value_type)
 	
-	var data = {'type': value_type,'default_value': default_value}
+	var data: Dictionary[StringName,Variant] = {
+		&'type': value_type,
+		&'default_value': default_value
+	}
 
 	var look_at = value.get('look_at')
-	if look_at and look_at.get('directory'):
-		var extension = look_at.get('extension','')
-		var files_founded = []
-		var last_mod: String = ''
-		for i in Paths.getFilesAt(look_at.directory,true,extension):
-			var file = i.get_file()
-			if file in files_founded: continue
-			var mod = Paths.getModFolder(i)
-			if last_mod != mod:
-				last_mod = mod
-				options.append('#'+mod)
-			files_founded.append(file)
-			options.append(file)
+	if look_at:
+		var directory = look_at.get('directory')
+		if directory:
+			var extension = look_at.get('extension','')
+			var files_founded: PackedStringArray
+			var last_mod: String
+			for i in Paths.getFilesAt(directory,true,extension):
+				var file = i.get_file()
+				if file in files_founded: continue
+				var mod = Paths.getModFolder(i)
+				if last_mod != mod:
+					last_mod = mod
+					options.append('#'+mod)
+				files_founded.append(file)
+				options.append(file)
 	
 	if options: data.options = options
 	return data

@@ -57,7 +57,7 @@ func set_value_no_signal(_v: float) -> void:
 
 func _draw() -> void:
 	var minimum = get_minimum_size().x
-	var center = size.y/2.0 - 10
+	var center = size.y*0.5 - 10
 	line_edit.position = Vector2(minimum,center)
 	slider.position = Vector2(minimum+line_edit.size.x + 10,center)
 

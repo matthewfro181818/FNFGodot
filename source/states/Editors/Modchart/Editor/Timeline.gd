@@ -8,8 +8,8 @@ const ModchartEditor = preload("res://source/states/Editors/Modchart/Editor/Modc
 @export var font_size: int = 14: set = set_font_size
 @export var draw_limit: int = 32: set = set_draw_limit
 
-var _timeline_space_center: float = timeline_space/2.0
-var height_center: float = line_height/2.0
+var _timeline_space_center: float = timeline_space*0.5
+var height_center: float = line_height*0.5
 
 var _real_step_init: int = step_init: set = _set_real_step_init
 var _step_offset: int = 0
@@ -83,9 +83,9 @@ func set_steps(val: int):
 func set_timeline_space(space: float): 
 	if space == timeline_space: return
 	timeline_space = space
-	_timeline_space_center = space/2.0; queue_redraw()
+	_timeline_space_center = space*0.5; queue_redraw()
 
 func set_line_height(height: float): 
 	if line_height == height: return
-	line_height = height;height_center = height/2.0; queue_redraw()
+	line_height = height;height_center = height*0.5; queue_redraw()
 #endregion

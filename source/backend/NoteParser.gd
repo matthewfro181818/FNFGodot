@@ -78,7 +78,7 @@ static func _create_note_sustains_old_version(note: Note, length: float, stepCro
 	var index: int = 0
 	var div: float = length/stepCrochet
 	var int_div = int(div)
-	var susCount: int = int_div if div-int_div < stepCrochet/2.0 else int_div+1
+	var susCount: int = int_div if div-int_div < stepCrochet*0.5 else int_div+1
 	while index <= susCount:
 		var step = stepCrochet*index
 		var sus_length = minf(stepCrochet, length - step)

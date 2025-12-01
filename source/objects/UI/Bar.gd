@@ -10,10 +10,14 @@ var y: float:
 	set(val): position.y = val
 	get(): return position.y
 
-var margin_offset_left: float = 4.0
-var margin_offset_right: float = 4.0
-var margin_offset_top: float = 4.0
-var margin_offset_bottom: float = 4.0
+var margin_offset_left: float = 4.0:
+	set(val): margin_offset_left = val; _update_bar()
+var margin_offset_right: float = 4.0:
+	set(val): margin_offset_right = val; _update_bar()
+var margin_offset_top: float = 4.0:
+	set(val): margin_offset_top = val; _update_bar()
+var margin_offset_bottom: float = 4.0:
+	set(val): margin_offset_bottom = val; _update_bar()
 
 var leftBar: CanvasItem = _get_fill_bar(null,true)
 var rightBar: CanvasItem = _get_fill_bar(null,true)
@@ -30,6 +34,7 @@ var bar_size: Vector2:
 		if bg.image.texture: bg.scale = val/bg.image.texture.get_size()
 		bar_size = val
 		_update_bar_fill_size()
+
 var fill_bars_size: Vector2 = Vector2.ZERO
 var _right_bar_is_color: bool = true: set = set_right_bar_is_color
 var _left_bar_is_color: bool = true: set = set_left_bar_is_color
@@ -53,7 +58,7 @@ func _ready():
 static func _get_fill_bar(old_bar: CanvasItem = null, is_solid_color: bool = true) -> CanvasItem:
 	var new_bar
 	if is_solid_color:
-		new_bar = ColorRect.new()
+		new_bar = SolidSprite.new()
 		if old_bar: new_bar.size = old_bar.region_rect.size.x
 		new_bar.position = Vector2(3,3)
 	else:
@@ -87,18 +92,20 @@ func move_bg_to_front() -> void: move_child(bg,get_child_count())
 func move_bg_to_behind() -> void:move_child(bg,0)
 
 #region Updaters
-func _update_bar() -> void:
-	var bar_size = Vector2(fill_bars_size.x*progress,fill_bars_size.y)
-	
+func _update_bar_position():
 	leftBar.position = Vector2(margin_offset_left,margin_offset_top)
 	rightBar.position = leftBar.position
-	
+
+func _update_bar() -> void:
+	if !is_node_ready(): return
+	_update_bar_position()
+	var bar_size = Vector2(fill_bars_size.x*progress,fill_bars_size.y)
 	if _left_bar_is_color: leftBar.size = bar_size
 	else: leftBar.region_rect.size = bar_size
 	
 	if _right_bar_is_color: rightBar.size = fill_bars_size
 	else: rightBar.region_rect.size = fill_bars_size
-		
+	
 	progress_position = get_process_position()
 
 func _update_bar_fill_size():
@@ -162,6 +169,6 @@ static func get_animated_bar() -> Sprite2D:
 #endregion
 
 func screenCenter(pos: String = 'xy') -> void:
-	if pos.begins_with('x'): position.x = ScreenUtils.screenCenter.x - bg.width/2.0
-	if pos.ends_with('y'): position.y = ScreenUtils.screenCenter.y - bg.height/2.0
+	if pos.begins_with('x'): position.x = ScreenUtils.screenCenter.x - bg.width*0.5
+	if pos.ends_with('y'): position.y = ScreenUtils.screenCenter.y - bg.height*0.5
 	

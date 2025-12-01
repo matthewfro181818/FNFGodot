@@ -16,11 +16,11 @@ var color: Color:
 	get(): return modulate
 
 var angle: float:
-	set(val): angle_degrees = deg_to_rad(val)
+	set(val): angle_degrees = deg_to_rad(val); _update_angle()
 	get(): return rad_to_deg(angle_degrees)
 
 var angle_degrees: float:
-	set(val): angle_degrees = val; _update_angle()
+	set(val): angle_degrees = val;
 
 var width: float:
 	set(value): width = value; _update_camera_size()
@@ -46,7 +46,9 @@ var _scroll_position: Vector2:
 	set(val): _scroll_position = val; _update_pivot();
 
 var _scroll_pivot_offset: Vector2: 
-	set(val): _scroll_pivot_offset = val; _update_scroll_transform() 
+	set(val):
+		if val == _scroll_pivot_offset: return
+		_scroll_pivot_offset = val; _update_scroll_transform() 
 
 var _real_scroll_position: Vector2
 
@@ -110,7 +112,7 @@ func _update_camera_size():
 	flashSprite.size = size
 	
 	if viewport: viewport.size = size
-	pivot_offset = size/2.0
+	pivot_offset = size*0.5
 	_update_rect_visible()
 
 func _update_viewport_size():
@@ -309,12 +311,11 @@ func _update_transform() -> void:
 	_update_pivot()
 
 func _update_pivot() -> void:
-	var _scroll_pivot = pivot_offset - _scroll_position
-	var _scroll_pivot_cal = _scroll_pivot
-	if angle_degrees: _scroll_pivot = _scroll_pivot.rotated(angle_degrees)
+	var _real_pivot = pivot_offset - _scroll_position
+	var _scroll_pivot = _real_pivot
 	if zoom != 1.0: _scroll_pivot *= zoom
-	_scroll_pivot_offset = (_scroll_pivot - _scroll_pivot_cal)
-	_update_scroll_transform()
+	if angle_degrees: _scroll_pivot = _scroll_pivot.rotated(-angle_degrees)
+	_scroll_pivot_offset = (_scroll_pivot - _real_pivot)
 
 func _update_angle(update_pivo: bool = true)  -> void:
 	if viewport: 

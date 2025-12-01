@@ -6,10 +6,12 @@ const Song = preload("uid://cerxbopol4l1g")
 const NoteHit = preload("uid://dx85xmyb5icvh")
 const default_offset: Vector2 = Vector2.ZERO
 
+static var keyCount: int = 4
 ##Strum Direction
 ##[br][param 0: left, 1: down, 2: up, 3: right]
-@export var data: int;
-
+@export var data: int:
+	set(val): data = val; _data_mod = val % keyCount
+@export var _data_mod: int
 ##Direction of the note in radius. [br]
 ##Example: [code]deg_to_rad(90)[/code] makes the notes come from the left,
 ##while [code]deg_to_rag(180)[/code] makes come from the top.[br]
@@ -53,7 +55,7 @@ signal mult_speed_changed
 func _init(dir: int = 0):
 	super._init(true)
 	data = dir
-	hit_action = NoteHit.getInputActions()[dir]
+	hit_action = NoteHit.getInputActions()[_data_mod]
 	
 	offset_follow_scale = true
 	offset_follow_rotation = true
@@ -71,7 +73,7 @@ func reloadStrumNote() -> void: ##Reload Strum Texture Data
 
 const _anim_direction: PackedStringArray = ['left','down','up','right']
 func _load_anims_from_prefix() -> void:
-	var type = _anim_direction[data]
+	var type = _anim_direction[_data_mod]
 	
 	var static_anim = styleData.data[type+'Static']
 	var press_anim = styleData.data[type+'Press']
@@ -91,11 +93,10 @@ func _load_anims_from_prefix() -> void:
 
 func _load_graphic_anims() -> void:
 	var keyCount: int = Song.keyCount
-	var strum_data = data % keyCount
 	image.region_rect.size = imageSize/Vector2(keyCount,5)
-	animation.addFrameAnim(&'static',[strum_data])
-	animation.addFrameAnim(&'confirm',[strum_data + (keyCount*3),strum_data + (keyCount*4),strum_data + keyCount])
-	animation.addFrameAnim(&'press',[strum_data + (keyCount*3),strum_data + (keyCount*2)])
+	animation.addFrameAnim(&'static',[_data_mod])
+	animation.addFrameAnim(&'confirm',[_data_mod + (keyCount*3),_data_mod + (keyCount*4),_data_mod + keyCount])
+	animation.addFrameAnim(&'press',[_data_mod + (keyCount*3),_data_mod + (keyCount*2)])
 
 func loadFromStyle(noteStyle: String):
 	styleName = noteStyle

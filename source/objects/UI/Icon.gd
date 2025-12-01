@@ -40,7 +40,7 @@ func changeIcon(icon: StringName = "icon-face"):
 		animation.addFrameAnim(&'winning',[2])
 		
 	else:
-		setGraphicSize(imageSize.x/2.0,imageSize.y)
+		setGraphicSize(imageSize.x*0.5,imageSize.y)
 		animation.addFrameAnim(&'normal',[0])
 		animation.addFrameAnim(&'losing',[1])
 	

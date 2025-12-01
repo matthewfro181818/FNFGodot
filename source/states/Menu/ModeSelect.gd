@@ -106,7 +106,7 @@ func loadModeSelectOptions():
 		menu.offset_follow_scale = true
 		menu.addAnimOffset('selected',menu.pivot_offset/3)
 		menu.addAnimOffset('static',Vector2.ZERO)
-		menu._position = Vector2(menu_pos[0] - menu.pivot_offset.x,menu_pos[1]) - ScreenUtils.screenOffset/2.0
+		menu._position = Vector2(menu_pos[0] - menu.pivot_offset.x,menu_pos[1]) - ScreenUtils.screenOffset*0.5
 		option_parent.add_child(menu)
 		option_parent.options.append(menu)
 		options.append(menu)
@@ -208,19 +208,19 @@ func exitTo(option_node: Node):
 	stop_blink()
 	if cur_tab == option_parent:
 		match option_node.name:
-			'story_mode':
+			&'story_mode':
 				var story_menu = StoryMenu.new()
 				story_menu.back_to = get_script()
 				Global.swapTree(story_menu,true)
-			'freeplay':
+			&'freeplay':
 				freeplay_node = Freeplay.new()
 				freeplay_node.exiting.connect(spawn)
 				add_child(freeplay_node)
 				transparent()
-			'mods':
+			&'mods':
 				select_tab(mods_parent)
 				set_process_input(true)
-			'options':
+			&'options':
 				var i = Options.new()
 				i.back_to = get_script()
 				Global.swapTree(i)

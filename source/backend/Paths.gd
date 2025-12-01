@@ -423,9 +423,13 @@ static func loadShader(path: String) -> ShaderMaterial:
 	
 	material = ShaderMaterial.new()
 	material.shader = loadShaderCodeAbsolute(absolute_path)
+	_set_shader_parameters_to_default(material) # When you try to get a parameter, it returns "null" until the parameter is set.
 	shadersCreated[absolute_path] = material
 	return material
 
+static func _set_shader_parameters_to_default(material: ShaderMaterial):
+	for i in material.shader.get_shader_uniform_list():
+		material.set_shader_parameter(i.name,RenderingServer.shader_get_parameter_default(material.shader.get_rid(),i.name))
 static func loadShaderCode(path: String) -> Shader: return loadShaderCodeAbsolute(shaderPath(path))
 
 static func loadShaderCodeAbsolute(absolute_path: String) -> Shader:

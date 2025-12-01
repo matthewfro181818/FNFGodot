@@ -151,7 +151,7 @@ func _setup_hud() -> void:
 	camHUD.add(uiGroup,true); 
 	if hideHud: return
 
-	healthBar.position.x = ScreenUtils.screenWidth/2.0 - healthBar.bg.width/2.0
+	healthBar.position.x = ScreenUtils.screenWidth*0.5 - healthBar.bg.width*0.5
 	healthBar.position.y = ScreenUtils.screenHeight - 100.0 if not ClientPrefs.data.downscroll else 50.0
 	uiGroup.add(healthBar)
 	
@@ -257,11 +257,11 @@ func createSplash(note) -> NoteSplash:
 	FunkinGD.callOnScripts(&'onSplashCreate',[splash])
 	return splash
 
-func createStrum(i: int, opponent_strum: bool = true, pos: Vector2 = Vector2.ZERO) -> StrumNote:
+func createStrum(i: int, pos: Vector2 = Vector2.ZERO) -> StrumNote:
 	var strum = super.createStrum(i)
-	strum.mustPress = !opponent_strum and !botplay
+	strum.mustPress = i >= keyCount and !botplay
 	strum._position = pos
-	FunkinGD.callOnScripts(&'onLoadStrum',[strum,opponent_strum])
+	FunkinGD.callOnScripts(&'onLoadStrum',[strum])
 	return strum
 
 func spawnNote(note): super.spawnNote(note); FunkinGD.callOnScripts(&'onSpawnNote',[note])
@@ -275,11 +275,11 @@ func reloadNotes():
 
 func reloadNote(note: Note):
 	super.reloadNote(note)
+	FunkinGD.callOnScripts(&'onLoadNote',note)
 	if !note.noteType: return
 	var path = 'custom_notetypes/'+note.noteType+'.gd'
 	FunkinGD.callScript('assets/'+path,&'onLoadThisNote',note)
 	FunkinGD.callScript(path,&'onLoadThisNote',note)
-	FunkinGD.callOnScripts(&'onLoadNote',note)
 func loadNotes():
 	super.loadNotes()
 	if !loadEvents: return
@@ -359,11 +359,6 @@ func noteMiss(note, character: Variant = null) -> void:
 
 #region Script Methods
 func _load_song_scripts():
-	if loadScripts:
-		#print('Loading Scripts from Scripts Folder')
-		for i in Paths.getFilesAt('scripts',false,'.gd'):
-			FunkinGD.addScript('scripts/'+i)
-	
 	if loadStageScript:
 		#print('Loading Stage Script')
 		FunkinGD.addScript('stages/'+curStage+'.gd')
@@ -371,6 +366,11 @@ func _load_song_scripts():
 	if loadSongScript and SongData.folder:
 		#print('Loading Song Folder Script')
 		for i in Paths.getFilesAt(SongData.folder,false,'gd'):FunkinGD.addScript(SongData.folder+'/'+i)
+	
+	if loadScripts:
+		#print('Loading Scripts from Scripts Folder')
+		for i in Paths.getFilesAt('scripts',false,'.gd'):
+			FunkinGD.addScript('scripts/'+i)
 
 
 func triggerEvent(event: StringName,variables: Variant) -> void:
@@ -530,7 +530,7 @@ func _create_countdown_sprite(sprite_name: String, is_pixel: bool = isPixelStage
 		sprite.texture = Paths.texture('ui/countdown/funkin/'+sprite_name)
 		sprite.scale = Vector2(0.7,0.7)
 	
-	sprite.position = ScreenUtils.screenSize/2.0
+	sprite.position = ScreenUtils.screenSize*0.5
 	var tween = sprite.create_tween()
 	tween.tween_property(sprite,'modulate:a',0.0,Conductor.stepCrochet*0.004)
 	tween.tween_callback(sprite.queue_free)
@@ -667,7 +667,7 @@ func set_health(value: float) -> void:
 	
 	if isGameOverEnabled(): gameOver(); return
 	
-	var progress_h = value/2.0
+	var progress_h = value*0.5
 	healthBar.progress = progress_h if playAsOpponent else 1.0 - progress_h
 	
 	var bar_state = 0.0

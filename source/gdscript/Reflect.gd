@@ -87,6 +87,14 @@ static func _find_class(object: String) -> Object:
 	for i in source_dirs: var path = i+object; if FileAccess.file_exists(path): return load(path)
 	return null
 
+static func _find_group_member(group: Variant, index: Variant) -> Variant:
+	if group is String: group = _find_object(group)
+	if !group: return
+	if group is SpriteGroup: return group.members.get(index)
+	elif group is Array: return group.get(index)
+	elif group is Object or group is Dictionary: return group.get(index)
+	return null
+
 static func _find_object(property: Variant) -> Object:
 	if property is Object: return property
 	var split = _get_as_property(property).split('.')
@@ -121,7 +129,7 @@ static func _get_variable(obj: Variant, variable: String) -> Variant:
 		_: return null
 
 static func _find_object_with_split(property: Variant) -> Array:
-	if property is Object: return property
+	if not (property is String or property is StringName): return property
 	var split = _get_as_property(property).split('.')
 	var key = split[0]
 	var object = _find_property_owner(key)

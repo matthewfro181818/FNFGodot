@@ -32,7 +32,7 @@ func _draw() -> void:
 	if data.duration: 
 		length = data.duration/step_crochet*key_length_size
 		draw_rect(Rect2(
-			Vector2(KEY_CENTER.x,KEY_CENTER.y/2.0),
+			Vector2(KEY_CENTER.x,KEY_CENTER.y*0.5),
 			Vector2(length,KEY_CENTER.y)
 		),Color.WHITE)
 		size.x = length

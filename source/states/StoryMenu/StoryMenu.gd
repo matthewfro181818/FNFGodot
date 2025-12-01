@@ -47,7 +47,7 @@ func _ready():
 	tracks_text.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	tracks_text.clip_text = true
 	tracks_text.size = Vector2(300,ScreenUtils.screenHeight)
-	tracks_text.position = Vector2(-tracks_text.size.x/2.0 + 100,50)
+	tracks_text.position = Vector2(-tracks_text.size.x*0.5 + 100,50)
 	tracks_text.text = 'cuzinho'
 	tracks.add_child(tracks_text)
 	

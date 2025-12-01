@@ -262,7 +262,7 @@ func setGraphicSize(sizeX: float = -1.0, sizeY: float = -1.0) -> void: ##Cut the
 	if sizeY == -1.0: sizeY = image.region_rect.size.y
 	var size = Vector2(sizeX ,sizeY)
 	image.region_rect.size = size
-	pivot_offset = size/2.0
+	pivot_offset = size*0.5
 	image.pivot_offset = pivot_offset
 #endregion
 
@@ -309,7 +309,7 @@ func _on_texture_changed() -> void:
 	imageSize = image.texture.get_size()
 	if _auto_resize_image: 
 		image.region_rect = Rect2(Vector2.ZERO,imageSize); 
-		pivot_offset = imageSize/2.0
+		pivot_offset = imageSize*0.5
 		image.pivot_offset = pivot_offset
 
 func _on_image_changed() -> void:
@@ -325,7 +325,7 @@ func removeFromGroups() -> void: for group in groups: group.remove(self)
 
 func screenCenter(type: StringName = 'xy') -> void: ##Move the sprite to the center of the screen
 	var viewport = get_viewport(); if !viewport: return
-	var midScreen: Vector2 = viewport.size/2.0
+	var midScreen: Vector2 = viewport.size*0.5
 	match type:
 		&'xy': position = midScreen - (pivot_offset*scale)
 		&'x': x = midScreen.x - (pivot_offset.x * scale.x)

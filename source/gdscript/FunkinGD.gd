@@ -187,15 +187,27 @@ static func addCharacterToList(character: StringName, type: Variant = 'bf') -> v
 
 
 ##Set a Property. If [param target] set, the function will try to set the property from this object.
-static func setProperty(property: String, value: Variant, target: Variant = null) -> void:
-	Reflect.setProperty(property,value,target)
+static func setProperty(property: String, value: Variant, target: Variant = null) -> void: Reflect.setProperty(property,value,target)
+
+##Set a Property from a group member. If [param target] set, the function will try to set the property from this object.
+static func setPropertyFromGroup(group: Variant, index: Variant, property: Variant, value: Variant) -> void:
+	group = Reflect._find_group_member(group,index)
+	if !group: return
+	Reflect.setProperty(property,value,group)
+
+static func getPropertyFromGroup(group: Variant, index: Variant, property: String = '') -> Variant: 
+	group = Reflect._find_group_member(group,index)
+	if !property: return group
+	return Reflect.getProperty(property,group) if group else null
 
 static func getProperty(property: String, from: Variant = null): 
 	return Reflect.getProperty(property,from)
 
 static func setVar(variable: Variant, value: Variant = null) -> void: modVars[variable] = value ##Set/Add a variable to [member modVars].
 
-static func getVar(variable: Variant) -> Variant: return modVars.get(variable) ##Get a variable from the [member modVars].
+##Get a variable from the [member modVars].[br]
+##Note: If the [param variable] is not in [member modVars], then it will return [param default].
+static func getVar(variable: Variant, default: Variant = null) -> Variant: return modVars.get(variable,default)
 
 #endregion
 
@@ -355,12 +367,12 @@ static func setGraphicSize(object: Variant, sizeX: float = -1, sizeY: float = -1
 ##[param type] can be: [code]""xy,x,y[/code]
 static func screenCenter(object: Variant, type: String = &'xy') -> void:
 	object = Reflect._find_object(object); if !object: return
-	var center = (object.get_viewport().size/2.0 if object.is_inside_tree() else ScreenUtils.screenCenter)
+	var center = (object.get_viewport().size*0.5 if object.is_inside_tree() else ScreenUtils.screenCenter)
 	if object is FunkinSprite: center -= object.image.pivot_offset
 	else:
 		var tex = object.get('texture')
 		var size = tex.get_size() if tex else object.get('size')
-		if size: center += size/2.0
+		if size: center += size*0.5
 	
 	var obj_pos = object.call('get_position'); if !obj_pos: return
 	match type:
@@ -523,6 +535,7 @@ static func textsExits(tag: String) -> bool: return textsCreated.has(tag) ##Chec
 ##Start Tween. Similar to [method createTween].[br]
 ##[b]OBS:[/b] if [param time] is [code]0.0[/code], this will cause the function to set the values, without any tween.
 static func startTween(tag: String, object: Variant, what: Dictionary,time: Variant = 1.0, easing: StringName = &'') -> TweenerObject:
+	if !object: return
 	if !object is Object:
 		var split = Reflect._find_object_with_split(object)
 		object = split[0]
@@ -538,6 +551,7 @@ static func startTween(tag: String, object: Variant, what: Dictionary,time: Vari
 		what.erase(property)
 	
 	if time: return startTweenNoCheck(tag,object,what,float(time),easing)
+	
 	for i in what: 
 		if i is NodePath or i.contains(":"): object.set_indexed(i,what[i])
 		else: object.set(i,what[i])
@@ -558,7 +572,7 @@ static func createTweenMethod(from: Variant, to: Variant, time: Variant, ease: S
 	return tween
 
 ##Create a Tween Interpolation, see more about in [method TweenService.createTween]
-static func createTween(object: Variant, what: Dictionary,time: Variant, easing: StringName = &''):
+static func createTween(object: Variant, what: Dictionary, time: Variant, easing: StringName = &''):
 	object = Reflect._find_object(object); 
 	var tween = TweenService.createTween(object,what,time,easing); 
 	tween.bind_node = object if object is Node else game
@@ -756,7 +770,9 @@ static func addShaderFloat(shader: Variant, parameter: String, value: float): ##
 	var vars = shader.get_shader_parameter(parameter); if vars == null: vars = 0.0
 	shader.set_shader_parameter(parameter,vars+value)
 
-static func getShaderParameter(shader: Variant, shaderVar: String) -> Variant: shader = _find_shader_material(shader); return shader.get_shader_parameter(shaderVar) if shader else null
+static func getShaderParameter(shader: Variant, shaderVar: String) -> Variant: 
+	shader = _find_shader_material(shader); 
+	return shader.get_shader_parameter(shaderVar) if shader else null
 #endregion
 
 static func setBlendMode(object: Variant, blend: String) -> void: ##Sets Object Blend mode, can be: [code]add,subtract,mix[/code]
@@ -804,7 +820,7 @@ static func getCenterBetween(object1: Variant, object2: Variant) -> Vector2:
 	
 	var pos_1 = object1.get_position() if object1.has_method(&'get_position') else Vector2.ZERO
 	var pos_2 = object2.get_position() if object2.has_method(&'get_position') else Vector2.ZERO
-	return pos_1 + (pos_2 - pos_1)/2.0
+	return pos_1 + (pos_2 - pos_1)*0.5
 
 
 
@@ -817,6 +833,9 @@ static func cameraAsString(string: StringName) -> StringName:
 		_: return string
 
 static func getCharacterCamPos(char: Variant): ##Returns the camera position from [param char].
+	if char is String: char =  Reflect._find_object(char)
+	if !char: return Vector2.ZERO
+	if game: return game.getCameraPos(char)
 	if char is String: char = getProperty(char)
 	if char is Character: return char.getCameraPosition()
 	if char is FunkinSprite: return char.getMidpoint()
@@ -989,37 +1008,41 @@ func close() -> void: removeScript(self)
 
 
 #region Event Methods
-##Trigger Event, if [code]value2[/code] is setted, [variables] will be considered as a value1;[br]
-##Example: [codeblock]
-###Similar to the old versions of Psych Engine, more limited.
-##triggerEvent('eventName','value1','value2')
-##
-###Can set multiply variables, useful for complex events
-##triggerEvent('eventName',{'x': 0.0,'y': 0.0,'angle': 0.0})
+##Trigger Event. [codeblock]
+##triggerEvent('Change Character','gf','gf-dead')
+##triggerEvent('UIFade',0.0,1.0,true)
 ##[/codeblock]
-static func triggerEvent(event: StringName,variables: Variant = '', value2: Variant = ''):
-	if !variables is StringName: game.triggerEvent(event,variables)
+static func triggerEvent(event: StringName,...args: Array):
+	var default_values: Dictionary = EventNoteUtils.get_event_variables(event)
+	var keys: Array = default_values.keys()
 	
-	var default: Dictionary = EventNoteUtils.get_event_variables(event)
-	var event_keys = default.keys()
-	var parameters: Dictionary = {}
+	if !args: 
+		var i = default_values.size()
+		while i: i -= 1; var key = keys[i]; default_values[key] = default_values[keys].default_value
+		return game.triggerEvent(event,default_values)
 	
-	for i in default: parameters[i] = default[i].default_value
+	var parameters: Dictionary[StringName, Variant]
+	var index = 0
+	var keys_length = keys.size()
+	var args_length = minf(args.size(),keys_length)
+	while index < args_length:
+		var key = keys[index]
+		parameters[key] = EventNoteUtils._convert_event_value_type(args[index],default_values[key].type)
+		index += 1
 	
-	if variables:
-		var first_key = event_keys[0]
-		parameters[first_key] = EventNoteUtils._convert_event_value_type(
-				variables,
-				default[first_key].type
-			)
-	
-	if value2 and event_keys.size() > 1:
-		parameters[event_keys[1]] = EventNoteUtils._convert_event_value_type(
-			value2,
-			default[event_keys[1]].type
-		)
-	
-	game.triggerEvent(event,parameters)
+	while index < keys_length: var key = keys[index]; parameters[key] = default_values[key].default_value; index += 1
+	return game.triggerEvent(event,parameters)
+
+##Trigger Event using [Dictionary].
+##triggerEvent('UIFade',{"alpha": 0.0, "time": 1.0,"strums": true)
+##triggerEvent('Change Character',{"char": "bf", "json": "bf-dead"})
+##[/codeblock]
+static func triggerEventData(event: StringName, variables: Dictionary):
+	var default_values: Dictionary = EventNoteUtils.get_event_variables(event)
+	for i in default_values: 
+		var val = default_values[i]
+		variables[i] = type_convert(variables[i],val.type) if i in variables else val.default_value
+	return game.triggerEvent(event,variables)
 #endregion
 
 #region Color Methods

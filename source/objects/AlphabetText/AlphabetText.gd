@@ -54,7 +54,7 @@ func set_text(newText: String):
 	_insert_letters(text)
 	
 	size = Vector2(width,height)
-	pivot_offset = size/2.0
+	pivot_offset = size*0.5
 	text_changed.emit(text)
 
 func _insert_letters(_text: String):
@@ -117,7 +117,7 @@ func update_letters_position(h_aligment: HorizontalAlignment = horizontal_alignm
 		HORIZONTAL_ALIGNMENT_CENTER: 
 			var _line: int = 0
 			for letters in letters_in_lines:
-				var center = lines_sizes[_line]/2.0
+				var center = lines_sizes[_line]*0.5
 				for i in letters: if i: i._position.x -= center
 				_line += 1
 			
@@ -129,7 +129,7 @@ func update_letters_position(h_aligment: HorizontalAlignment = horizontal_alignm
 				_line += 1
 	match vertical_alignment:
 		VERTICAL_ALIGNMENT_CENTER:
-			var center = height/2.0
+			var center = height*0.5
 			for l in letters_in_lines: for i in l: if i: i._position.y -= center
 			
 		VERTICAL_ALIGNMENT_BOTTOM:

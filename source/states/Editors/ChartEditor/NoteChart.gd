@@ -56,7 +56,7 @@ func setNoteLength(length: float):
 
 func _create_sustain():
 	sustain = ColorRect.new()
-	sustain.position = Vector2(chess_rect_size.x/2.0 - 5,chess_rect_size.y)
+	sustain.position = Vector2(chess_rect_size.x*0.5 - 5,chess_rect_size.y)
 	sustain.size.x = 10
 	sustain.scale.y = sustain_scale
 	add_child(sustain)

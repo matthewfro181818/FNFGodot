@@ -79,7 +79,7 @@ func _draw_chess() -> void:
 		RenderingServer.canvas_item_add_rect(nrid,Rect2(Vector2.ZERO,rect_size),primary_color)
 		RenderingServer.canvas_item_add_rect(nrid,Rect2(rect_size,rect_size),primary_color)
 	else:
-		var center = primary_border_width/2.0
+		var center = primary_border_width*0.5
 		#region Left Top
 		#Left
 		RenderingServer.canvas_item_add_line(nrid,
@@ -137,7 +137,7 @@ func _draw_chess() -> void:
 		RenderingServer.canvas_item_add_rect(nrid,Rect2(Vector2(rect_size.x,0),rect_size),secondary_color)
 		RenderingServer.canvas_item_add_rect(nrid,Rect2(Vector2(0,rect_size.y),rect_size),secondary_color)
 	else:
-		var center = secondary_border_width/2.0
+		var center = secondary_border_width*0.5
 		var pos_end = rect_size*2.0
 		#region Right Top
 		#Left

@@ -224,7 +224,7 @@ func seek_to(time: float, kill_notes: bool = true):
 #region Strums
 func updateStrumsPosition():
 	var screen_center = ScreenUtils.screenCenter
-	var key_div = keyCount/2.0
+	var key_div = keyCount*0.5
 	var strum_off = StrumOffset
 	
 	var strumsSpace = (StrumOffset*keyCount)
@@ -274,6 +274,7 @@ func updateStrumsY() -> void:
 	while index: index -= 1; defaultStrumPos[index].y = strumY; 
 
 func _create_strums() -> void:
+	StrumNote.keyCount = keyCount
 	for i in strumLineNotes.members: i.queue_free()
 	
 	strumLineNotes.members.clear()
@@ -285,7 +286,7 @@ func _create_strums() -> void:
 	i = keyCount*2
 	while i > keyCount: #Player Strums
 		i -= 1
-		var strum = createStrum(i-keyCount)
+		var strum = createStrum(i)
 		strum.mustPress = !botplay
 		playerStrums.insert(0,strum)
 		strumLineNotes.insert(0,strum)
@@ -370,11 +371,11 @@ func _check_hit_notes() -> void:
 		var i = hitNotes[index]
 		if i: hitNotes[index] = null; if Input.is_action_just_pressed(i.hit_action): preHitNote(i)
 
-
-func spawnNote(note: Note) -> void: ##Spawns the note
-	if note: addNoteToGroup(note,note.noteGroup if note.noteGroup else notes)
+##Spawns the note
+func spawnNote(note: Note) -> void: if note: addNoteToGroup(note,note.noteGroup if note.noteGroup else notes)
 
 func addNoteToGroup(note: Note, group: Node) -> void:
+	if group != notes: notes.members.append(note)
 	if group is SpriteGroup:
 		if note.isSustainNote: group.insert(0,note)
 		else: group.add(note)
@@ -450,6 +451,7 @@ func reloadNote(note: Note):
 	var noteStrum: StrumNote = strumLineNotes.members.get((note.noteData + keyCount) if note.mustPress else note.noteData)
 	note.strumNote = noteStrum
 	note.isPixelNote = isPixelStage
+	note.noteGroup = notes
 	note.resetNote()
 	if note.isSustainNote: note.splashStyle = splashHoldStyle
 	else: note.splashStyle = note.splashStyle
@@ -530,7 +532,7 @@ func destroy(absolute: bool = true): ##Remove the state
 #region Setters
 func _set_botplay(is_botplay: bool) -> void: botplay = is_botplay; _update_strum_must_press()
 
-func set_song_speed(value): songSpeed = value; noteSpawnTime = NOTE_SPAWN_TIME/(value/2.0)
+func set_song_speed(value): songSpeed = value; noteSpawnTime = NOTE_SPAWN_TIME/(value*0.5)
 
 func _set_play_opponent(isOpponent: bool = playAsOpponent) -> void:
 	if playAsOpponent == isOpponent: return

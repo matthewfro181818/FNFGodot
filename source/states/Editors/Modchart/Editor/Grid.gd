@@ -128,7 +128,7 @@ func insertKeyToArray(key_node: KeyInterpolatorNode) -> int:
 			
 	else: key.prev_val = data.interator.properties[property].default
 	
-	key_node.position.y = size.y/keys.size()/2.0 - key_node.size.y/2.0 + container.grid_size.y*keys.keys().find(property)
+	key_node.position.y = size.y/keys.size()*0.5 - key_node.size.y*0.5 + container.grid_size.y*keys.keys().find(property)
 	_keys.insert(index,key)
 	spawn_key(key.key_node)
 	return index

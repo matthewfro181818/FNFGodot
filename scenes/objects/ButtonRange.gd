@@ -74,7 +74,7 @@ func _on_minimum_size_change() -> void:
 	
 func _update_nodes_position():
 	var width: float = _last_size.x + 8
-	var min_center = size.y/2.0
+	var min_center = size.y*0.5
 	for i in _value_nodes:
 		i.position.x = width
 		width += i.size.x + 2

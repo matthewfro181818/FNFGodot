@@ -93,7 +93,7 @@ func loadStage(stage: StringName,loadScript: bool = true):
 func _process(delta: float) -> void:
 	if camZooming: camGame.zoom = lerpf(camGame.zoom,camGame.defaultZoom,delta*3*zoomSpeed)
 	super._process(delta)
-	if camFollowPosition: camGame.scroll = camGame.scroll.lerp(camFollow-ScreenUtils.defaultSizeCenter, cameraSpeed*delta*3.5)
+	if camFollowPosition: camGame.scroll = camGame.scroll.lerp(camFollow-ScreenUtils.screenCenter, cameraSpeed*delta*3.5)
 
 func onBeatHit(beat: int = Conductor.beat) -> void:
 	for character in [dad,boyfriend,gf]:
@@ -244,12 +244,10 @@ func getCharacterNote(note: Note) -> Character: return gf if note.gfNote else (b
 
 static func getCameraPos(obj: Node) -> Vector2:
 	if !obj: return Vector2.ZERO
-	
 	var pos: Vector2
 	if obj is Character: pos = obj.getCameraPosition() + getCameraOffset(obj)
 	elif obj is FunkinSprite: pos = obj.getMidpoint()
 	else: pos = obj.position
-	if ScreenUtils.screenOffset: pos -= ScreenUtils.screenOffset/2.0
 	return pos
 
 static func getCameraOffset(obj: Character) -> Vector2:

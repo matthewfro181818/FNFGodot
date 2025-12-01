@@ -25,7 +25,7 @@ func _init(): super._init(true)
 
 func setNoteRect(region: Rect2):
 	image.region_rect = region
-	image.pivot_offset = region.size/2.0
+	image.pivot_offset = region.size*0.5
 	pivot_offset = image.pivot_offset
 
 func loadFromStyle(noteStyle: String,prefix: String = stylePrefix):

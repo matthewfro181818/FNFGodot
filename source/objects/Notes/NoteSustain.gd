@@ -76,7 +76,7 @@ func updateSustain():
 	var fill = absf(real_distance / scale.y)
 	rect.position.y += fill
 	rect.size.y = maxf(0.0,rect.size.y - fill)
-	if isBeingDestroyed and distance < -sustainLength: kill()
+	if isBeingDestroyed and distance < -(rect.size.y if isEndSustain else sustainLength): kill()
 	image.region_rect = rect
 	real_distance = 0.0
 

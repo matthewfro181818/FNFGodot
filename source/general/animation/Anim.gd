@@ -220,7 +220,6 @@ func clearLibrary() -> void: stop(); animationsArray.clear(); _midpoint_set = fa
 
 func update_midpoint_from_frame(frame: Dictionary) -> void:
 	var size = frame.get(&'frameSize')
-	
 	if !size: size = frame.get(&'size'); if !size: return
 	
 	_set_midpoint(size)

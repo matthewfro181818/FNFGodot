@@ -14,7 +14,7 @@ extends Node2D
 		queue_redraw()
 
 func _draw() -> void:
-	var center = marker_size.x/2.0 - marker_size.y/2.0
+	var center = marker_size.x*0.5 - marker_size.y*0.5
 	draw_rect(Rect2(
 		center,
 		0,

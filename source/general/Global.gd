@@ -87,7 +87,7 @@ func show_label_warning(text: Variant, time: float = 2.0, width: float = ScreenU
 	timer.start(time)
 	timer.timeout.connect(_label_timer_finished.bind(label))
 	label.set('theme_override_constants/outline_size',10)
-	label.position.x = ScreenUtils.screenCenter.x - label.size.x/2.0
+	label.position.x = ScreenUtils.screenCenter.x - label.size.x*0.5
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	
 	label.z_index = 1

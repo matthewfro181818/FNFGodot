@@ -25,7 +25,7 @@ static var main_window: Window
 static func _init() -> void:
 	defaultSize.x = ProjectSettings.get_setting('display/window/size/viewport_width')
 	defaultSize.y = ProjectSettings.get_setting('display/window/size/viewport_height')
-	defaultSizeCenter = defaultSize/2.0
+	defaultSizeCenter = defaultSize*0.5
 	_set_window.call_deferred()
 	updateScreenData()
 
@@ -36,7 +36,7 @@ static func _set_window():
 	
 static func updateScreenData():
 	screenSize = defaultSize - screenOffset
-	screenCenter = screenSize/2.0
+	screenCenter = screenSize*0.5
 	
 static func updateScreenSize() -> void:
 	var new_size = main_window.size

@@ -182,7 +182,6 @@ func resetNote() -> void: ##Reset Note values when spawned.
 	_is_processing = true
 	missed = false
 	offset = Vector2.ZERO
-	noteGroup = null
 	material = null
 	ignoreNote = false
 	splashName = &"noteSplash"

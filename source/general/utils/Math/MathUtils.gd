@@ -13,32 +13,31 @@ static func is_area_in_another_area(area1: Vector2, area1_size: Vector2, area2: 
 	return Rect2(area1,area1_size).intersects(Rect2(area2,area2_size))
 	
 static func is_pos_in_areas(pos: Vector2, areas_pos: Array, areas_sizes: Array) -> bool:
-	for i in range(areas_pos.size()):
-		if is_pos_in_area(pos,areas_pos[i],areas_sizes[i]):
-			return true
+	for i in areas_pos.size(): if is_pos_in_area(pos,areas_pos[i],areas_sizes[i]): return true
 	return false 
 
-const numbers: Array = [TYPE_INT,TYPE_FLOAT]
+const numbers: PackedInt32Array = [TYPE_INT,TYPE_FLOAT]
 static func is_number(variable: Variant) -> bool:
 	return typeof(variable) in numbers
 
 
-const type_strings: Dictionary[String,int] = {
-	'string': TYPE_STRING,
-	'stringname': TYPE_STRING_NAME,
-	'float': TYPE_FLOAT,
-	'int': TYPE_INT,
-	'array': TYPE_ARRAY,
-	'packedstringarray': TYPE_PACKED_STRING_ARRAY,
-	'dictionary': TYPE_DICTIONARY,
-	'vector2': TYPE_VECTOR2,
-	'vector2i': TYPE_VECTOR2I,
-	'vector3': TYPE_VECTOR3,
-	'vector3i': TYPE_VECTOR3I,
-	'vector4': TYPE_VECTOR4,
-	'vector4i': TYPE_VECTOR4I,
-	'color': TYPE_COLOR,
-	'null': TYPE_NIL
+const type_strings: Dictionary[StringName,int] = {
+	&'string': TYPE_STRING,
+	&'stringname': TYPE_STRING_NAME,
+	&'float': TYPE_FLOAT,
+	&'bool': TYPE_BOOL,
+	&'int': TYPE_INT,
+	&'array': TYPE_ARRAY,
+	&'packedstringarray': TYPE_PACKED_STRING_ARRAY,
+	&'dictionary': TYPE_DICTIONARY,
+	&'vector2': TYPE_VECTOR2,
+	&'vector2i': TYPE_VECTOR2I,
+	&'vector3': TYPE_VECTOR3,
+	&'vector3i': TYPE_VECTOR3I,
+	&'vector4': TYPE_VECTOR4,
+	&'vector4i': TYPE_VECTOR4I,
+	&'color': TYPE_COLOR,
+	&'null': TYPE_NIL
 }
 const indexable_types: Dictionary = {
 	TYPE_ARRAY: true,
@@ -72,15 +71,16 @@ const math_types: Dictionary = {
 	TYPE_COLOR: true,
 }
 
-static func type_via_string(type: String) -> int: return type_strings.get(type.to_lower(),TYPE_NIL)
+static func type_via_string(type: StringName) -> int: return type_strings.get(type.to_lower(),TYPE_NIL)
 	
-static func convert_type_via_string(value: Variant, type: String) -> Variant: return type_convert(value,type_via_string(type))
+static func convert_type_via_string(value: Variant, type: StringName) -> Variant: return type_convert(value,type_via_string(type))
 	
 static func get_new_value(type: int) -> Variant:
 	match type:
 		TYPE_FLOAT: return 0.0
 		TYPE_INT: return 0
 		TYPE_ARRAY: return []
+		TYPE_BOOL: return false
 		TYPE_PACKED_BYTE_ARRAY: return PackedByteArray()
 		TYPE_PACKED_COLOR_ARRAY: return PackedColorArray()
 		TYPE_PACKED_FLOAT32_ARRAY: return PackedFloat32Array()

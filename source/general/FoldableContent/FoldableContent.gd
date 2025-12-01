@@ -58,7 +58,7 @@ func _update_button_pos():
 	match vertical_aligmnent:
 		VERTICAL_ALIGNMENT_TOP: button.position.y = 0.0 - 5
 		VERTICAL_ALIGNMENT_BOTTOM: button.position.y = size.y - button.size.y + 5
-		_: button.position.y = (size.y- button.size.y - 5)/2.0 
+		_: button.position.y = (size.y- button.size.y - 5)*0.5 
 	button.position.x = 5
 func _update_button_text(): button.text = '>' if folded else 'v'
 
