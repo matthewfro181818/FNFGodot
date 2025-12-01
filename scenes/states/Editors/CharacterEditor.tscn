@@ -1,7 +1,8 @@
-[gd_scene load_steps=6 format=3 uid="uid://droixhbemd0xd"]
+[gd_scene load_steps=7 format=3 uid="uid://droixhbemd0xd"]
 
 [ext_resource type="Script" uid="uid://dkyvojm86n535" path="res://source/states/Editors/CharacterEditor/CharacterEditor.gd" id="1_qbwox"]
 [ext_resource type="Script" uid="uid://cdw8oloedo54f" path="res://source/states/Editors/CharacterEditor/Marker.gd" id="2_6y1bd"]
+[ext_resource type="Script" uid="uid://dsm0luhaq03go" path="res://source/custom_nodes/ChessMovement.gd" id="2_fjx64"]
 [ext_resource type="PackedScene" uid="uid://b1a3jlb7iu130" path="res://scenes/objects/ButtonRange.tscn" id="3_atq18"]
 [ext_resource type="StyleBox" uid="uid://go6q2nvp2mu1" path="res://source/general/FoldableContent/FoldableStyleBox.tres" id="3_fjx64"]
 [ext_resource type="Script" uid="uid://cvvli26q7wviq" path="res://source/general/popup/PopupDir.gd" id="4_6y1bd"]
@@ -9,11 +10,19 @@
 [node name="Character Editor" type="Node"]
 script = ExtResource("1_qbwox")
 
-[node name="BG_Image" type="Sprite2D" parent="."]
-modulate = Color(0.270222, 0.270222, 0.270222, 1)
-texture_filter = 3
-texture_repeat = 1
-centered = false
+[node name="ChessScroll" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1290.0
+offset_bottom = 720.0
+mouse_filter = 2
+script = ExtResource("2_fjx64")
+primary_color = Color(0.3137255, 0.3137255, 0.3137255, 1)
+secondary_color = Color(0.078431375, 0.078431375, 0.078431375, 1)
+steps = 43
+length = 24
+metadata/_custom_type_script = "uid://dsm0luhaq03go"
+metadata/_edit_lock_ = true
 
 [node name="BG" type="Node2D" parent="."]
 texture_filter = 2
@@ -64,9 +73,11 @@ size_flags_vertical = 3
 layout_mode = 2
 focus_mode = 0
 theme_override_styles/panel = ExtResource("3_fjx64")
+folded = true
 title = "Current Animation Data"
 
 [node name="Data" type="Label" parent="TabContainer/Animation Data/Container/Current Animation"]
+visible = false
 custom_minimum_size = Vector2(0, 350)
 layout_mode = 2
 text = "

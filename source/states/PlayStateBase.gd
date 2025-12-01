@@ -81,7 +81,6 @@ var iconP1: Icon = Icon.new()
 var iconP2: Icon = Icon.new()
 var icons: Array[Icon] = [iconP1,iconP2]
 var _icons_cos_sin: Vector2 = Vector2(1,0)
-var scoreTxt: Label
 #endregion
 
 #endregion
@@ -121,10 +120,8 @@ func _ready():
 	add_child(camHUD)
 	add_child(camOther)
 	
-	_setup_hud()
 	
 	super._ready()
-	
 	health = 1.0
 	
 	if !isCameraOnForcedPos: moveCamera(detectSection())
@@ -144,12 +141,13 @@ func _process(delta: float) -> void:
 	
 	super._process(delta)
 	
-	for icon in icons: updateIconPos(icon)	
+	for icon in icons: updateIconPos(icon)
 
 	FunkinGD.callOnScripts(&'onUpdatePost',[delta])
 
 #region Gui
 func _setup_hud() -> void:
+	super._setup_hud()
 	camHUD.add(uiGroup,true); 
 	if hideHud: return
 
@@ -175,15 +173,6 @@ func _setup_hud() -> void:
 	uiGroup.add(iconP2)
 	
 	healthBar.flip = true
-	scoreTxt = FunkinText.new()
-	scoreTxt.size.x = ScreenUtils.screenWidth
-	scoreTxt.y = ScreenUtils.screenHeight - 50.0
-	scoreTxt.text = 'Score: 0 | Misses: 0 | Accurancy: 0%(N/A)'
-	scoreTxt.name = &'scoreTxt'
-	
-	if isPixelStage: FunkinGD.setTextFont(scoreTxt,'pixel.otf')
-	
-	uiGroup.add(scoreTxt)
 	
 	healthBar.name = &'healthBar'
 	FunkinGD.callOnScripts(&"onSetupHud")
@@ -297,7 +286,7 @@ func loadNotes():
 	if eventNotes: _is_first_event_load = false; return
 	
 	var events_to_load = SONG.get('events',[])
-	var events_json = Paths.loadJson(Song.folder+'/events.json')
+	var events_json = Paths.loadJson(SongData.folder+'/events.json')
 	
 	if events_json:
 		if events_json.get('song') is Dictionary: events_json = events_json.song
@@ -341,7 +330,7 @@ func hitNote(note: Note, character: Variant = null) -> void:
 	if !note: return
 	if note.mustPress != playAsOpponent: health += note.hitHealth
 	
-	if character: signCharacter(character,note)
+	if character and !note.noAnimation: signCharacter(character,note)
 	
 	var audio: AudioStreamPlayer = Conductor.get_node_or_null("PlayerVoice" if note.mustPress else "OpponentVoice")
 	if !audio: audio = Conductor.get_node_or_null("Voice")
@@ -358,7 +347,7 @@ func hitNote(note: Note, character: Variant = null) -> void:
 	FunkinGD.callOnScripts(&'onHitNote',[note,character])
 	super.hitNote(note)
 
-func signCharacter(character: Character, note: Note): pass
+func signCharacter(_character: Character, _note: Note): pass
 
 func noteMiss(note, character: Variant = null) -> void:
 	health -= note.missHealth
@@ -379,9 +368,9 @@ func _load_song_scripts():
 		#print('Loading Stage Script')
 		FunkinGD.addScript('stages/'+curStage+'.gd')
 	
-	if loadSongScript and Song.folder:
+	if loadSongScript and SongData.folder:
 		#print('Loading Song Folder Script')
-		for i in Paths.getFilesAt(Song.folder,false,'gd'):FunkinGD.addScript(Song.folder+'/'+i)
+		for i in Paths.getFilesAt(SongData.folder,false,'gd'):FunkinGD.addScript(SongData.folder+'/'+i)
 
 
 func triggerEvent(event: StringName,variables: Variant) -> void:
@@ -425,7 +414,7 @@ func loadSongObjects() -> void:
 	loadCharactersFromData()
 	
 	if !inModchartEditor:
-		DiscordRPC.state = 'Now Playing: '+Song.songName
+		DiscordRPC.state = 'Now Playing: '+SongData.songName
 		DiscordRPC.refresh()
 	
 func loadEventsScripts():
@@ -641,6 +630,7 @@ static func get_character_type_name(type: int) -> StringName:
 func loadStage(stage: StringName, loadScript: bool = loadStageScript):
 	if curStage == stage: return
 	FunkinGD.removeScript('stages/'+curStage)
+	FunkinGD.callOnScripts(&"onPreloadStage",stage)
 	FunkinGD.curStage = stage
 	curStage = stage
 	
@@ -648,6 +638,7 @@ func loadStage(stage: StringName, loadScript: bool = loadStageScript):
 	isPixelStage = stageJson.isPixelStage
 	
 	if loadScript: FunkinGD.addScript('stages/'+stage); Stage.loadSprites()
+	FunkinGD.callOnScripts(&"onLoadStage",stage)
 #endregion
 
 #region Game Over Methods

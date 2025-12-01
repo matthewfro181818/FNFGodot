@@ -148,8 +148,6 @@ func _ready():
 		func(i): 
 			animation_prefix.text = prefixListPop.get_item_text(i); animation_prefix.text_submitted.emit(animation_prefix.text)
 	)
-	
-	$BG_Image.texture = Paths.texture('editors/character_editor/bg')
 	$BG/Ground.texture =  Paths.texture('editors/character_editor/ground')
 	camera_y_limit = $BG/Ground.texture.get_size().y*$BG/Ground.scale.y + 300
 

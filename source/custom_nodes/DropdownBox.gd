@@ -1,7 +1,7 @@
 @tool
 class_name DropdownBox extends Control
 
-@export var items: PackedStringArray = []: set = set_texts
+@export var items: PackedStringArray: set = set_texts
 @onready var folder_container: FoldableContainer = $FoldableContainer
 @onready var separator: VBoxContainer = $FoldableContainer/VBoxContainer
 @onready var label: Label = $Label

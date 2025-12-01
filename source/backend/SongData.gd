@@ -1,4 +1,4 @@
-extends Object
+class_name SongData extends Object
 ##A Chart Song Class.
 
 const EventNoteUtils = preload("uid://dqymf0mowy0dt")

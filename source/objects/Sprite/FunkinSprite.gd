@@ -244,7 +244,8 @@ func set_camera(_cam: Node):
 @warning_ignore("native_method_override")
 func get_position() -> Vector2: return _position
 func _get_real_position() -> Vector2: return _position - _real_offset - _real_pivot_offset + _scroll_offset - _graphic_offset
-func getMidpoint() -> Vector2:return _position + _scroll_offset + pivot_offset ##Get the [u]center[/u] position of the sprite in the scene.
+func getMidpoint() -> Vector2:
+	return _position + _scroll_offset + pivot_offset ##Get the [u]center[/u] position of the sprite in the scene.
 #endregion
 
 #region Image Setters
@@ -284,7 +285,7 @@ func _update_graphic_offset() -> void: _graphic_offset = image.pivot_offset*_gra
 func _update_pivot() -> void:
 	if !pivot_offset.x and !pivot_offset.y: _real_pivot_offset = Vector2.ZERO; return
 	var pivo = pivot_offset
-	pivo = pivo*scale
+	if scale != Vector2.ONE: pivo = pivo*scale
 	if rotation: pivo = pivo.rotated(rotation)
 	_real_pivot_offset = pivo - pivot_offset
 

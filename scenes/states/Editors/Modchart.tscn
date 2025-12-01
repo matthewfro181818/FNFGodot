@@ -630,7 +630,7 @@ class KeyValue extends TextureButton:
 [sub_resource type="GDScript" id="GDScript_tgc53"]
 resource_name = "GridExplorer"
 script/source = "extends PanelContainer
-const DropdownScene = preload(\"res://source/custom_nodes/DropdownBox.tscn\")
+const DropdownScene = preload(\"uid://chnhbepr464uw\")
 
 var object_selected: DropdownBox
 var interators: Dictionary[Object,Dictionary] = {}

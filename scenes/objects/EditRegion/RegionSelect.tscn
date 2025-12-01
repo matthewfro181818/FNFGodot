@@ -1,0 +1,211 @@
+[gd_scene load_steps=3 format=3 uid="uid://dkx5dkwa42rdt"]
+
+[ext_resource type="StyleBox" uid="uid://bp0u0tev07acf" path="res://scenes/objects/EditRegion/SelectButton.tres" id="1_r0tiu"]
+
+[sub_resource type="GDScript" id="GDScript_r0tiu"]
+script/source = "@tool
+extends ReferenceRect
+@onready var top_left = $TopLeft
+@onready var top_center = $TopCenter
+@onready var top_right = $TopRight
+@onready var left = $Left
+@onready var right = $Right
+@onready var bottom_left = $BottomLeft
+@onready var bottom_center = $BottomCenter
+@onready var bottom_right = $BottomRight
+
+
+var limit_position: Vector2 = Vector2.ZERO:
+	set(val):
+		limit_position = val
+		position = position.clamp(val,limit_size)
+
+var limit_size: Vector2 = Vector2(1280,720):
+	set(val):
+		limit_size = val
+		size = size.min(val)
+		position = position.clamp(limit_position,val)
+
+func _ready() -> void:
+	top_left.gui_input.connect(_button_top_events.bind(top_left))
+	top_center.gui_input.connect(_button_top_events.bind(top_center))
+	top_right.gui_input.connect(_button_top_events.bind(top_right))
+	
+	left.gui_input.connect(_button_center_events.bind(left))
+	right.gui_input.connect(_button_center_events.bind(right))
+	
+	bottom_left.gui_input.connect(_button_bottom_events.bind(bottom_left))
+	bottom_center.gui_input.connect(_button_bottom_events.bind(bottom_center))
+	bottom_right.gui_input.connect(_button_bottom_events.bind(bottom_right))
+
+	resized.connect(_on_resized); _on_resized()
+
+func _on_resized() -> void:
+	position = position.clamp(limit_position,size)
+	size = size.min(limit_size)
+	var left_pos: float = -10
+	var right_pos: float = size.x
+	var center = size.x/2.0
+	top_left.position = Vector2(left_pos, - top_left.size.y)
+	top_center.position = Vector2(center - top_center.size.x/2.0,-top_center.size.y)
+	top_right.position = Vector2(right_pos,-top_right.size.y)
+	
+	var center_y = size.y/2.0
+	left.position = Vector2(left_pos, center_y - left.size.y/2.0)
+	right.position = Vector2(right_pos, center_y - right.size.y/2.0)
+	
+	var bottom = size.y
+	bottom_left.position = Vector2(left_pos,bottom)
+	bottom_center.position = Vector2(center - bottom_center.size.x/2.0,bottom)
+	bottom_right.position = Vector2(right_pos,bottom)
+
+
+var start_rect: Rect2 = Rect2(0,0,0,0)
+var current_rect: Rect2 = Rect2(0,0,0,0)
+func _save_positions():
+	start_rect.position = position
+	start_rect.size = size
+	current_rect.position = position
+	current_rect.size = size
+
+func _button_top_events(input: InputEvent, button: Button):
+	if input is InputEventMouseButton: _save_positions()
+	elif input is InputEventMouseMotion and button.button_pressed:
+		current_rect.position.y += input.relative.y
+		match button.name:
+			&\"TopLeft\":
+				current_rect.position.x += input.relative.x
+				size = (start_rect.size - (current_rect.position - start_rect.position)).abs()
+				position = start_rect.position + start_rect.size.min(current_rect.position - start_rect.position)
+			&\"TopCenter\":
+				size.y = absf(start_rect.size.y - (current_rect.position.y - start_rect.position.y))
+				position.y = start_rect.position.y + minf(start_rect.size.y,current_rect.position.y - start_rect.position.y)
+			&\"TopRight\":
+				current_rect.size.x += input.relative.x
+				size = Vector2(
+					start_rect.size.x + (current_rect.size.x - start_rect.size.x),
+					start_rect.size.y - (current_rect.position.y - start_rect.position.y),
+				).abs()
+				position = Vector2(
+					start_rect.position.x + minf(0.0,current_rect.position.x - start_rect.position.x),
+					start_rect.position.y + minf(start_rect.size.y,current_rect.position.y - start_rect.position.y),
+				)
+
+func _button_bottom_events(input: InputEvent, button: Button):
+	if input is InputEventMouseButton: _save_positions()
+	elif input is InputEventMouseMotion and button.button_pressed:
+		current_rect.size.y += input.relative.y
+		match button.name:
+			&\"BottomLeft\":
+				current_rect.position.x += input.relative.x
+				var size_y = start_rect.size.y + (current_rect.size.y - start_rect.size.y)
+				position.x = start_rect.position.x + minf(start_rect.size.x,(current_rect.position.x - start_rect.position.x))
+				position.y = start_rect.position.y + minf(0.0,size_y)
+				size = Vector2(
+					start_rect.size.x - (current_rect.position.x - start_rect.position.x),
+					size_y,
+				).abs()
+			&\"BottomCenter\":
+				var size_y = start_rect.size.y + (current_rect.size.y - start_rect.size.y)
+				position.y = start_rect.position.y + minf(0.0,size_y)
+				size.y = absf(size_y)
+			&\"BottomRight\":
+				current_rect.size.x += input.relative.x
+				position = start_rect.position + Vector2.ZERO.min(current_rect.size)
+				size = (start_rect.size + (current_rect.size - start_rect.size)).abs()
+
+func _button_center_events(input: InputEvent, button: Button):
+	if input is InputEventMouseButton: _save_positions()
+	elif input is InputEventMouseMotion and button.button_pressed:
+		match button.name:
+			&\"Left\":
+				current_rect.position.x += input.relative.x
+				position.x = start_rect.position.x + minf(current_rect.position.x - start_rect.position.x,start_rect.size.x)
+				size.x = absf(start_rect.size.x - (current_rect.position.x - start_rect.position.x))
+			&\"Right\":
+				current_rect.size.x += input.relative.x
+				var offset = start_rect.size.x + (current_rect.size.x - start_rect.size.x)
+				position.x = start_rect.position.x + minf(offset,0.0)
+				size.x = absf(offset)
+"
+
+[node name="RegionSelect" type="ReferenceRect"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 500.0
+offset_top = 500.0
+offset_right = -701.0
+offset_bottom = -184.34497
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+border_width = 3.0
+editor_only = false
+script = SubResource("GDScript_r0tiu")
+
+[node name="TopLeft" type="Button" parent="."]
+layout_mode = 0
+offset_left = -10.0
+offset_top = -10.0
+focus_mode = 0
+theme_override_styles/normal = ExtResource("1_r0tiu")
+
+[node name="TopCenter" type="Button" parent="."]
+layout_mode = 0
+offset_left = 34.5
+offset_top = -10.0
+offset_right = 44.5
+focus_mode = 0
+theme_override_styles/normal = ExtResource("1_r0tiu")
+
+[node name="TopRight" type="Button" parent="."]
+layout_mode = 0
+offset_left = 79.0
+offset_top = -10.0
+offset_right = 89.0
+focus_mode = 0
+theme_override_styles/normal = ExtResource("1_r0tiu")
+
+[node name="BottomLeft" type="Button" parent="."]
+layout_mode = 0
+offset_left = -10.0
+offset_top = 35.65503
+offset_bottom = 45.65503
+focus_mode = 0
+theme_override_styles/normal = ExtResource("1_r0tiu")
+
+[node name="BottomCenter" type="Button" parent="."]
+layout_mode = 0
+offset_left = 34.5
+offset_top = 35.65503
+offset_right = 44.5
+offset_bottom = 45.65503
+focus_mode = 0
+theme_override_styles/normal = ExtResource("1_r0tiu")
+
+[node name="BottomRight" type="Button" parent="."]
+layout_mode = 0
+offset_left = 79.0
+offset_top = 35.65503
+offset_right = 89.0
+offset_bottom = 45.65503
+focus_mode = 0
+theme_override_styles/normal = ExtResource("1_r0tiu")
+
+[node name="Left" type="Button" parent="."]
+layout_mode = 0
+offset_left = -10.0
+offset_top = 12.827515
+offset_bottom = 22.827515
+focus_mode = 0
+theme_override_styles/normal = ExtResource("1_r0tiu")
+
+[node name="Right" type="Button" parent="."]
+layout_mode = 0
+offset_left = 79.0
+offset_top = 12.827515
+offset_right = 89.0
+offset_bottom = 22.827515
+focus_mode = 0
+theme_override_styles/normal = ExtResource("1_r0tiu")

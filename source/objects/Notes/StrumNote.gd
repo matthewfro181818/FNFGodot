@@ -101,8 +101,8 @@ func loadFromStyle(noteStyle: String):
 	styleName = noteStyle
 	if !styleData: return
 	
-	isPixelNote = styleData.get('isPixel',false)
-	default_scale = styleData.get('scale',0.7)
+	isPixelNote = styleData.get(&'isPixel',false)
+	default_scale = styleData.get(&'scale',0.7)
 	texture = styleData.assetPath
 
 func _on_texture_changed() -> void: super._on_texture_changed(); animation.clearLibrary()

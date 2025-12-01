@@ -1,0 +1,113 @@
+[gd_scene load_steps=7 format=3 uid="uid://csdkrsfquvmlw"]
+
+[ext_resource type="Texture2D" uid="uid://bp6t5yoxfcqvn" path="res://assets/images/fnf_godot_e.png" id="1_clirf"]
+[ext_resource type="PackedScene" uid="uid://dkx5dkwa42rdt" path="res://scenes/objects/EditRegion/RegionSelect.tscn" id="2_clirf"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fwur4"]
+resource_local_to_scene = true
+bg_color = Color(0.060530342, 0.060530365, 0.060530297, 1)
+
+[sub_resource type="GDScript" id="GDScript_wo066"]
+script/source = "@tool
+extends PopupPanel
+@export var texture: Texture2D
+@onready var container = $VBoxContainer
+
+func _ready() -> void: container.minimum_size_changed.connect(resized); resized(); call_deferred(\"call_deferred\",\"show\")
+func resized(): size = container.get_combined_minimum_size().min(Vector2(400,100))
+"
+
+[sub_resource type="GDScript" id="GDScript_nji0y"]
+script/source = "@tool
+extends TextureRect
+
+@onready var reference_rect = $ReferenceRect
+@onready var region_select = $RegionSelect
+func _draw():
+	reference_rect.size = texture.get_size() if texture else Vector2(25,25)
+	reference_rect.position = Vector2(25,25)
+	custom_minimum_size = reference_rect.size + Vector2(50,50)
+	region_select.size = reference_rect.size
+	region_select.position = reference_rect.position
+	region_select.limit_size = reference_rect.size
+"
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_nji0y"]
+bg_color = Color(0.06053035, 0.06053035, 0.060530342, 1)
+
+[node name="EditRegion" type="PopupPanel"]
+canvas_item_default_texture_filter = 0
+oversampling_override = 1.0
+position = Vector2i(0, 36)
+size = Vector2i(732, 713)
+visible = true
+min_size = Vector2i(500, 500)
+theme_override_styles/panel = SubResource("StyleBoxFlat_fwur4")
+script = SubResource("GDScript_wo066")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "
+	Select region
+"
+horizontal_alignment = 1
+
+[node name="PanelContainer" type="PanelContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="CenterContainer" type="CenterContainer" parent="VBoxContainer/PanelContainer"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="TextureRect" type="TextureRect" parent="VBoxContainer/PanelContainer/CenterContainer"]
+texture_filter = 2
+texture_repeat = 1
+custom_minimum_size = Vector2(732, 624)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("1_clirf")
+stretch_mode = 3
+script = SubResource("GDScript_nji0y")
+
+[node name="ReferenceRect" type="ReferenceRect" parent="VBoxContainer/PanelContainer/CenterContainer/TextureRect"]
+layout_mode = 0
+offset_left = 25.0
+offset_top = 25.0
+offset_right = 707.0
+offset_bottom = 599.0
+mouse_filter = 2
+border_color = Color(1, 1, 1, 1)
+editor_only = false
+
+[node name="RegionSelect" parent="VBoxContainer/PanelContainer/CenterContainer/TextureRect" instance=ExtResource("2_clirf")]
+layout_mode = 0
+anchors_preset = 0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 25.0
+offset_top = 25.0
+offset_right = 707.0
+offset_bottom = 599.0
+grow_horizontal = 1
+grow_vertical = 1
+
+[node name="Container" type="PanelContainer" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+size_flags_vertical = 8
+theme_override_styles/panel = SubResource("StyleBoxFlat_nji0y")
+
+[node name="Button" type="Button" parent="VBoxContainer/Container"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+text = "Close"

@@ -9,17 +9,17 @@ static var girlfriendCameraOffset: Vector2 = Vector2.ZERO
 static var opponentCameraOffset: Vector2 = Vector2.ZERO
 
 
-var camFollow: Vector2 = Vector2(0.0,0.0)
+var camFollow: Vector2
+var camFollowPosition: bool = true
+var camGame: FunkinCamera = FunkinCamera.new()
+var cameras: Array[FunkinCamera] = [camGame,camHUD,camOther]
 @export_category('Groups')
 var boyfriendGroup: SpriteGroup = SpriteGroup.new() #Added in Stage.loadSprites()
 var dadGroup: SpriteGroup = SpriteGroup.new()# Added in Stage.loadSprites()
 var gfGroup: SpriteGroup = SpriteGroup.new()# Also added in Stage.loadSprites()
 
-var camGame: FunkinCamera = FunkinCamera.new()
-
-var cameras: Array[FunkinCamera] = [camGame,camHUD,camOther]
 @export_category('Game Over')
-const GameOverSubstate := preload("res://source/substates/GameOverSubstate.gd")
+const GameOverSubstate = preload("uid://clemxsqclutjh")
 
 func _ready():
 	add_child(camGame)
@@ -30,9 +30,9 @@ func _ready():
 	gfGroup.name = &'gfGroup'
 	
 	Stage.charactersGroup = {
-		'bf': boyfriendGroup,
-		'dad': dadGroup,
-		'gf': gfGroup
+		&'bf': boyfriendGroup,
+		&'dad': dadGroup,
+		&'gf': gfGroup
 	}
 	super._ready()
 
@@ -93,10 +93,7 @@ func loadStage(stage: StringName,loadScript: bool = true):
 func _process(delta: float) -> void:
 	if camZooming: camGame.zoom = lerpf(camGame.zoom,camGame.defaultZoom,delta*3*zoomSpeed)
 	super._process(delta)
-	camGame.scroll = camGame.scroll.lerp(
-		camFollow - ScreenUtils.defaultSizeCenter + ScreenUtils.screenOffset,
-		cameraSpeed*delta*3.5
-	)
+	if camFollowPosition: camGame.scroll = camGame.scroll.lerp(camFollow-ScreenUtils.defaultSizeCenter, cameraSpeed*delta*3.5)
 
 func onBeatHit(beat: int = Conductor.beat) -> void:
 	for character in [dad,boyfriend,gf]:
@@ -147,6 +144,7 @@ func preHitNote(note: Note, character: Variant = getCharacterNote(note)):  super
 func hitNote(note: Note, character: Variant = getCharacterNote(note)): super.hitNote(note,character)
 
 func signCharacter(character: Character, note: Note):
+	if !character or character.stunned: return
 	var mustPress: bool = note.mustPress
 	var target = boyfriend if mustPress else dad
 	var gfNote = note.gfNote or (gfSection and mustPress == mustHitSection)
@@ -174,7 +172,7 @@ func noteMiss(note: Note, character: Variant = getCharacterNote(note)):
 	super.noteMiss(note,character)
 
 func moveCamera(target: StringName = 'boyfriend') -> void:
-	camFollow = getCameraPos(get(target)) 
+	camFollow = getCameraPos(get(target))
 	super.moveCamera(target)
 
 func screenBeat(multi: float = 1.0) -> void:
@@ -244,19 +242,17 @@ func set_default_zoom(value: float) -> void: super.set_default_zoom(value); camG
 
 func getCharacterNote(note: Note) -> Character: return gf if note.gfNote else (boyfriend if note.mustPress else dad)
 
-static func getCameraPos(obj: Node, add_camera_json_offset: bool = true) -> Vector2:
-	if !obj: return Vector2(0.0,0.0)
+static func getCameraPos(obj: Node) -> Vector2:
+	if !obj: return Vector2.ZERO
 	
 	var pos: Vector2
-	if obj is Character:
-		pos = obj.getCameraPosition()
-		if add_camera_json_offset: pos += getCameraOffset(obj)
-		if ScreenUtils.screenOffset.x: pos.x -= ScreenUtils.screenOffset.x/2.0
-		return pos
-	if obj is FunkinSprite: return obj.getMidPoint()
-	return obj.position
+	if obj is Character: pos = obj.getCameraPosition() + getCameraOffset(obj)
+	elif obj is FunkinSprite: pos = obj.getMidpoint()
+	else: pos = obj.position
+	if ScreenUtils.screenOffset: pos -= ScreenUtils.screenOffset/2.0
+	return pos
 
-static func getCameraOffset(obj: Node) -> Vector2:
+static func getCameraOffset(obj: Character) -> Vector2:
 	if obj.isGF: return girlfriendCameraOffset
 	if obj.isPlayer: return boyfriendCameraOffset
 	else: return opponentCameraOffset

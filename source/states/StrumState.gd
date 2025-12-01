@@ -1,8 +1,6 @@
 extends Node
 
 @export_category('Notes')
-const Song = preload("res://source/backend/Song.gd")
-
 const NoteStyleData = preload("uid://by78myum2dx8h")
 const NoteSplash = preload("uid://cct1klvoc2ebg")
 const Note = preload("uid://deen57blmmd13")
@@ -142,8 +140,11 @@ func _init(json_file: StringName = &'', song_difficulty: StringName = &''):
 func _ready() -> void:
 	loadSong()
 	loadSongObjects()
-	if Paths.is_on_mobile: createMobileGUI()
 	if autoStartSong: startSong()
+
+func _setup_hud() -> void:
+	_create_strums()
+	if Paths.is_on_mobile: createMobileGUI()
 
 func createMobileGUI() -> void:
 	##HitBox
@@ -179,7 +180,9 @@ func loadSongObjects(): ##Load song data. Used in PlayState
 	
 	if splash_s: splashStyle = splash_s
 	if hold_s: splashHoldStyle = hold_s
-	_create_strums()
+	
+	_setup_hud()
+	
 	_respawnIndex = 0
 	_unspawnIndex = 0
 	if !SONG: return
@@ -520,9 +523,7 @@ func destroy(absolute: bool = true): ##Remove the state
 	if absolute: clear(); queue_free(); return
 	
 	Paths.clearLocalFiles()
-	if isModding: 
-		NoteSplash.splash_datas.clear()
-		NoteStyleData.styles_loaded.clear()
+	if isModding: NoteStyleData.styles_loaded.clear()
 	for note in notes.members: note.kill()
 
 
@@ -557,7 +558,6 @@ func clear() -> void:
 	unspawnNotes.clear()
 	
 	NoteStyleData.styles_loaded.clear()
-	NoteSplash.splash_datas.clear()
 	
 	Paths.clearLocalFiles()
 	inModchartEditor = false

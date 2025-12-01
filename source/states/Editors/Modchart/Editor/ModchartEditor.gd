@@ -24,12 +24,12 @@ static var songToLoad = 'test'
 
 
 #region Grid Properties
-const DropdownBoxScene = preload("res://source/custom_nodes/DropdownBox.tscn")
+const DropdownBoxScene = preload("uid://chnhbepr464uw")
 
 @onready var grid_explorer = $VSplit/Timeline/Objects/Explorer
 @onready var grid_container = $VSplit/Timeline/Position/GridContainer
 
-var grid_real_x: float = 0.0
+var grid_real_x: float
 var grid_x: float = 0.0
 var scroll_pos: float = 0.0
 #endregion

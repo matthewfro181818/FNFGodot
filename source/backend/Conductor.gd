@@ -3,7 +3,6 @@ extends Node
 const BEATS_PER_SECTION: int = 4
 
 const StreamNames = [&"Inst",&"OpponentVoice",&"Voice"]
-const Song = preload("res://source/backend/Song.gd")
 
 
 var songs: Array[AudioStreamPlayer] #[Inst,Opponent,Player]
@@ -28,6 +27,7 @@ var stepCrochetMs: float
 var sectionCrochet: float
 
 var songLength: float
+var songLengthSeconds: float
 
 var step: int: 
 	set(val): 
@@ -101,8 +101,8 @@ signal song_loaded
 
 #region Song methods
 func loadSong(json_name: String, suffix: String = '') -> Dictionary:
-	songJson = Song.loadJson(json_name, suffix)
-	if !songJson: return Song.getChartBase()
+	songJson = SongData.loadJson(json_name, suffix)
+	if !songJson: return SongData.getChartBase()
 	
 	songDefaultBpm = songJson.get('bpm',120)
 	bpm = songDefaultBpm
@@ -111,7 +111,7 @@ func loadSong(json_name: String, suffix: String = '') -> Dictionary:
 	return songJson
 
 ##Load [AudioPlayer]'s from the current song.
-func loadSongsStreams(folder: String = Song.audioFolder, suffix: String = Song.audioSuffix) -> void: #Used in StrumState.
+func loadSongsStreams(folder: String = SongData.audioFolder, suffix: String = SongData.audioSuffix) -> void: #Used in StrumState.
 	if songs: return
 
 	var player_name = songJson.get('opponentVocals',songJson.get('player1',''))
@@ -170,7 +170,9 @@ func loadSongsStreamsFromArray(paths_absolute: PackedStringArray):
 	
 	hasVoices = songs.size() > 1
 	
-	if songs and songs[0].stream: songLength = songs[0].stream.get_length()*1000.0
+	if songs and songs[0].stream: 
+		songLengthSeconds = songs[0].stream.get_length()
+		songLength = songLengthSeconds*1000.0
 	
 	
 	song_loaded.emit()
@@ -224,7 +226,7 @@ func clearSong(absolute: bool = true) -> void: ##Clear all the songs created
 	_bpm_changes.clear()
 	bpm = 0
 	songJson.clear()
-	Song._clear()
+	SongData._clear()
 
 func clear_changes() -> void: _bpm_changes = []; _beats_reduced_array = []
 	

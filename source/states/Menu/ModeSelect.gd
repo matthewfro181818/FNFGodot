@@ -10,7 +10,7 @@ const CharacterEditorScene = preload("uid://droixhbemd0xd")
 const CharEditorScript = preload("uid://dkyvojm86n535")
 
 const ChartEditorScene = preload("uid://eonsf5cks44n")
-const ChartEditorScript = preload("uid://cigpxll0rg8br")
+const ChartEditorScript = preload("uid://cyotiath61hou")
 const ModchartEditorScene = preload("uid://dgigti34bmg6s")
 
 const menu_options_name: PackedStringArray = ['story_mode','freeplay','mods','options']
@@ -235,7 +235,7 @@ func exitTo(option_node: Node):
 				CharEditorScript.back_to = get_script()
 			'Chart Editor': 
 				Global.swapTree(ChartEditorScene)
-				ChartEditorScript.back_to = get_script()
+				#ChartEditorScript.back_to = get_script()
 			'Modchart Editor': Global.swapTree(ModchartEditorScene)
 		Global.onSwapTree.connect(FunkinGD.stopSound.bind('freakyMenu'),CONNECT_ONE_SHOT)
 	

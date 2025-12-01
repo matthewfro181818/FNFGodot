@@ -10,7 +10,6 @@ offset_right = 130.0
 offset_bottom = 163.0
 size_flags_horizontal = 3
 script = ExtResource("1_btham")
-items = PackedStringArray()
 folded = true
 
 [node name="FoldableContainer" type="FoldableContainer" parent="."]

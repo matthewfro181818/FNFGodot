@@ -12,10 +12,7 @@ class_name FunkinCamera extends Node2D
 	set(val): zoom = val; _update_zoom()
 
 var color: Color:
-	set(value): 
-		modulate.r = value.r
-		modulate.g = value.g
-		modulate.b = value.b
+	set(value): modulate = value
 	get(): return modulate
 
 var angle: float:
@@ -53,7 +50,7 @@ var _scroll_pivot_offset: Vector2:
 
 var _real_scroll_position: Vector2
 
-var flashSprite: FlashSprite = FlashSprite.new()
+var flashSprite: SolidSprite = SolidSprite.new()
 @export var defaultZoom: float = 1.0 #Used in PlayState
 
 #region Shake
@@ -110,7 +107,7 @@ func _ready() -> void: _update_camera_size()
 func _update_camera_size():
 	bg.scale.x = width; bg.scale.y = height
 	var size = bg.scale
-	flashSprite.scale = size
+	flashSprite.size = size
 	
 	if viewport: viewport.size = size
 	pivot_offset = size/2.0
@@ -121,7 +118,7 @@ func _update_viewport_size():
 #endregion
 
 #region Shaders Methods
-func setFilters(shaders: Array = []) -> void: ##Set Shaders in the Camera
+func setFilters(shaders: Array) -> void: ##Set Shaders in the Camera
 	removeFilters()
 	if !shaders: return
 	
@@ -194,7 +191,9 @@ func removeFilters(): ##Remove every shader created in this camera.
 	if _viewports_created:
 		for i in _viewports_created: i.queue_free()
 		_viewports_created.clear()
-	
+
+func safe_remove_viewport() -> void: if can_remove_viewport(): remove_viewport()
+
 func create_viewport() -> void:
 	if viewport: return
 	viewport = _get_new_viewport()
@@ -313,7 +312,8 @@ func _update_pivot() -> void:
 	var _scroll_pivot = pivot_offset - _scroll_position
 	var _scroll_pivot_cal = _scroll_pivot
 	if angle_degrees: _scroll_pivot = _scroll_pivot.rotated(angle_degrees)
-	_scroll_pivot_offset = (_scroll_pivot*zoom - _scroll_pivot_cal)
+	if zoom != 1.0: _scroll_pivot *= zoom
+	_scroll_pivot_offset = (_scroll_pivot - _scroll_pivot_cal)
 	_update_scroll_transform()
 
 func _update_angle(update_pivo: bool = true)  -> void:
@@ -371,18 +371,3 @@ static func _get_new_viewport() -> SubViewport:
 	return view
 
 func _draw() -> void: RenderingServer.canvas_item_set_clip(get_canvas_item(),true)
-
-@warning_ignore("missing_tool")
-class FlashSprite:
-	extends SolidSprite
-	var window: Viewport:
-		set(value):
-			if window == value: return
-			elif window: window.size_changed.disconnect(_update_size)
-			window = value
-			if !value: return
-			window.size_changed.connect(_update_size)
-
-	func _notification(what: int) -> void:
-		if what == NOTIFICATION_PARENTED: window = get_viewport()
-	func _update_size(): scale = window.size

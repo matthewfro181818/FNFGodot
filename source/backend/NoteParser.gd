@@ -13,10 +13,10 @@ static func getNotesFromData(songData: Dictionary = {}) -> Array[Note]:
 	
 	var stepCrochet: float = Conductor.get_step_crochet(_bpm)
 	
-	var types_founded: PackedStringArray = PackedStringArray()
+	var types_founded: PackedStringArray
 	
 	var i: int = 0
-	var length = notesData.size()-1
+	var length = notesData.size()
 	while i < length:
 		var section = notesData[i]
 		if section.changeBPM and section.bpm != _bpm:
@@ -53,7 +53,6 @@ static func _insert_note_to_array(note: Note, array: Array, check_duplicated_not
 		
 		#Remove duplicated note
 		if !sameNote(note,prev_note): continue
-		prints("Removed Duplicate Note at:",prev_note.strumTime,prev_note.noteData)
 		if note.sustainLength < prev_note.sustainLength: return false
 		array.insert(index + 1,note);
 		for i in array.pop_at(index).sustainParents: array.erase(i);

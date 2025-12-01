@@ -5,10 +5,7 @@ const Note = preload("uid://deen57blmmd13")
 const NoteStyleData = preload("uid://by78myum2dx8h")
 const NoteSplash = preload("uid://cct1klvoc2ebg")
 
-const SplashOffset = Vector2(100,100)
-
 const HOLD_ANIMATIONS: Array = [&'start',&'hold',&'end']
-static var splash_datas: Dictionary[StringName,Dictionary]
 static var mosaicShader: Material
 
 var texture: StringName ## Splash Texture
@@ -115,7 +112,7 @@ static func _load_splash_animation(splash: NoteSplash,prefix: StringName) -> boo
 	if !splash.holdSplash:
 		var prefix_anim = data.get(&'prefix'); if !prefix_anim: return false
 		splash.animation.addAnimByPrefix(&'splash',prefix_anim,24.0,false)
-		splash.offset = data.get(&'offsets',offsets)+SplashOffset
+		splash.offset = data.get(&'offsets',offsets)
 		splash.scale = Vector2(scale,scale)
 		return true
 

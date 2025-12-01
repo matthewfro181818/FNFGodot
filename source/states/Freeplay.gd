@@ -1,5 +1,5 @@
 extends Node
-const Song = preload("res://source/backend/Song.gd")
+
 const AlphabetText = preload("res://source/objects/AlphabetText/AlphabetText.gd")
 const BarSize = 70
 const ModInfoScale = Vector2(0.45,0.45)
@@ -239,7 +239,7 @@ func load_game(
 	Global.swapTree(PlayState.new(song_name,difficulty),true)
 	tweenStarted = true
 	if !songFolder: return
-	Song.set_song_directory(song_name,difficulty,songFolder,json_name,audio_suffix)
+	SongData.set_song_directory(song_name,difficulty,songFolder,json_name,audio_suffix)
 	
 func exit():
 	set_process_input(false)

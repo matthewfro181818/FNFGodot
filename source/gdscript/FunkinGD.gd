@@ -1,4 +1,4 @@
-extends "FunkinInternal.gd"
+extends "res://source/gdscript/FunkinInternal.gd"
 class_name FunkinGD
 
 #region Variables
@@ -129,9 +129,6 @@ static var downscroll: bool:
 static var hideHud: bool
 
 #TimeBar
-static var timeBarType: StringName:
-	get(): return game.timeBarType if game else ClientPrefs.data.timeBarType
-
 static var shadersEnabled: bool:
 	get(): return ClientPrefs.data.shadersEnabled
 
@@ -279,10 +276,7 @@ static func makeAnimatedSprite(tag: StringName, path: Variant = null, x: float =
 	sprite.set_position_xy(x,y)
 	if tag: sprite.name = tag; _insert_sprite(tag,sprite)
 	return sprite
-
-static func makeSpriteFromSheet(tag: String,path: Variant, sheet_preffix: String,x: float = 0, y: float = 0):
-	var sprite = makeSprite(tag,path,x,y)
-	return sprite
+ 
 	
 
 static func addSprite(object: Variant, front: bool = false) -> void: ##Add [Sprite] to game.
@@ -304,13 +298,12 @@ static func insertSpriteToCamera(object: Variant, camera: Variant, at: int): ##I
 
 ##Remove [Sprite] of the game. When [code]delete[/code] is true, the sprite will be remove completely.
 static func removeSprite(object: Variant, delete: bool = false) -> void:
-	var tag
-	if object is Node: tag = object.name
-	else: tag = object; object = Reflect._find_object(object)
-
 	if !object: return
+	var tag: StringName
+	if object is Node: tag = object.name
+	else: tag = object; object = Reflect._find_object(object); if !object: return
 	
-	if object.is_inside_tree(): object.get_parent().remove_child(object)
+	if object.get_parent(): object.get_parent().remove_child(object)
 	if delete: spritesCreated.erase(tag)
 
 static func createSpriteGroup(tag: String) -> SpriteGroup: ##Creates a [SpriteGroup].
@@ -400,18 +393,11 @@ static func getObjectOrder(object: Variant) -> int: ##Returns the object's order
 ##Returns if the sprite, created using [method makeSprite] or [method makeAnimatedSprite] or [method setVar], exists.
 static func spriteExists(tag: StringName) -> bool: return tag in spritesCreated or modVars.get(tag) is FunkinSprite
 
-static func getMidpointX(object: Variant) -> float: ##Returns the midpoint.x of the object. See also [method getMidpointY].
+static func getMidpoint(object: Variant) -> Vector2: ##Returns the midpoint.x of the object. See also [method getMidpointY].
 	object = Reflect._find_object(object)
-	if object is FunkinSprite: return object.getMidpoint().x
-	if (object is CanvasItem) and object.get('texture'): return object.position.x + (object.texture.get_size().x/2.0)
-	return 0.0
-
-
-static func getMidpointY(object: Variant) -> float: ##Returns the midpoint.y of the object. See also [method getMidpointX].
-	object = Reflect._find_object(object)
-	if object is FunkinSprite: return object.getMidpoint().y
-	if (object is CanvasItem) and object.get('texture'): return object.position.y + (object.texture.get_size().y/2.0)
-	return 0.0
+	if object is FunkinSprite: return object.getMidpoint()
+	if (object is CanvasItem) and object.get(&'texture'): return object.position + (object.texture.get_size())
+	return Vector2.ZERO
 #endregion
 
 
@@ -575,7 +561,7 @@ static func createTweenMethod(from: Variant, to: Variant, time: Variant, ease: S
 static func createTween(object: Variant, what: Dictionary,time: Variant, easing: StringName = &''):
 	object = Reflect._find_object(object); 
 	var tween = TweenService.createTween(object,what,time,easing); 
-	tween.bind_node = object
+	tween.bind_node = object if object is Node else game
 	return tween
 
 ##Similar to [method Tween.tween_method].
@@ -816,10 +802,10 @@ static func getCenterBetween(object1: Variant, object2: Variant) -> Vector2:
 	object1 = Reflect._find_object(object1); if !object1: return Vector2.ZERO
 	object2 = Reflect._find_object(object2); if !object2: return Vector2.ZERO
 	
-	var pos_1 = object1.get_position() if object1.has_method(&'get_position') else null
-	var pos_2 = object2.get_position() if object2.has_method(&'get_position') else null
-	if !((pos_1 is Vector2 or pos_1 is Vector2i) and (pos_2 is Vector2 or pos_2 is Vector2i)): return Vector2.ZERO
-	return pos_1 - (pos_2 - pos_1)/2.0
+	var pos_1 = object1.get_position() if object1.has_method(&'get_position') else Vector2.ZERO
+	var pos_2 = object2.get_position() if object2.has_method(&'get_position') else Vector2.ZERO
+	return pos_1 + (pos_2 - pos_1)/2.0
+
 
 
 ##Detect the camera name using a String.
@@ -832,7 +818,6 @@ static func cameraAsString(string: StringName) -> StringName:
 
 static func getCharacterCamPos(char: Variant): ##Returns the camera position from [param char].
 	if char is String: char = getProperty(char)
-	if game: return game.getCameraPos(char)
 	if char is Character: return char.getCameraPosition()
 	if char is FunkinSprite: return char.getMidpoint()
 	

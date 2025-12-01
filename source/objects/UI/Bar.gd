@@ -5,9 +5,11 @@ var bg: FunkinSprite = FunkinSprite.new()
 var x: float:
 	set(val): position.x = val
 	get(): return position.x
+
 var y: float: 
 	set(val): position.y = val
 	get(): return position.y
+
 var margin_offset_left: float = 4.0
 var margin_offset_right: float = 4.0
 var margin_offset_top: float = 4.0
@@ -22,16 +24,21 @@ var progress_position: Vector2 = Vector2.ZERO
 
 var flip: bool = false: set = set_flip
 
+var bar_size: Vector2:
+	set(val):
+		if bar_size == val: return
+		if bg.image.texture: bg.scale = val/bg.image.texture.get_size()
+		bar_size = val
+		_update_bar_fill_size()
 var fill_bars_size: Vector2 = Vector2.ZERO
-var defaultSize: Vector2 = Vector2.ZERO
 var _right_bar_is_color: bool = true: set = set_right_bar_is_color
 var _left_bar_is_color: bool = true: set = set_left_bar_is_color
 
-func _init(bgImage: String = ''):
+func _init(bgImage: StringName = &""):
 	name = &'bar'
-	bg.image.texture_changed.connect(func():defaultSize = Vector2(bg.width,bg.height))
+	bg.image.texture_changed.connect(func(): bg.pivot_offset = Vector2.ZERO; bar_size = Vector2(bg.width,bg.height))
 	
-	bg.image.texture = Paths.texture(bgImage)
+	if bgImage: bg.image.texture = Paths.texture(bgImage)
 	bg.name = &'bg'
 	add_child(rightBar)
 	rightBar.modulate = Color(0.4,0.4,0.4,1)
@@ -95,7 +102,8 @@ func _update_bar() -> void:
 	progress_position = get_process_position()
 
 func _update_bar_fill_size():
-	fill_bars_size = bg.imageSize - Vector2(
+	if !is_node_ready(): return
+	fill_bars_size = bar_size - Vector2(
 		margin_offset_left + margin_offset_right,
 		margin_offset_top + margin_offset_bottom
 	)
@@ -142,7 +150,7 @@ func set_right_bar_is_color(is_c: bool) -> void:
 
 #region Getters
 func get_process_position(process: float = progress) -> Vector2:
-	var _process = Vector2(bg.imageSize.x*process,0.0)*scale
+	var _process = Vector2(bar_size.x*process,0.0)*scale
 	if rotation: return _process.rotated(rotation)
 	return _process
 

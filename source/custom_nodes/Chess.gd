@@ -11,8 +11,8 @@ extends Control
 @export var secondary_border_width: float = 5.0: set = set_secondary_border_width
 
 @export var rect_size: Vector2 = Vector2(30,30): set = set_rect_size
-@export_range(0,50) var steps: int = 4: set = set_steps
-@export_range(0,50) var length: int = 2: set = set_length
+@export var steps: int = 4: set = set_steps
+@export var length: int = 2: set = set_length
 
 var width: float
 var height: float
@@ -22,7 +22,6 @@ var node: Node2D: get = _get_node
 func _init() -> void: resized.connect(_update_size)
 
 func _ready() -> void: 
-	mouse_filter = Control.MOUSE_FILTER_STOP
 	_update_size()
 
 func _get_node() -> Node2D:

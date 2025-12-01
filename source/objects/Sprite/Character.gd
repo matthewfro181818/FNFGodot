@@ -29,6 +29,7 @@ var heyTimer: float ##The time the character is in the "Hey" animation.
 #endregion
 var _images: Dictionary[StringName,Texture2D]
 
+var stunned: bool = false
 
 #region Animation Variables
 var animationsArray:
@@ -151,10 +152,15 @@ func loadData():
 	danceOnAnimEnd = json.danceOnAnimEnd
 
 func getCameraPosition() -> Vector2: 
-	var cam_offset = cameraPosition
-	if isGF: return getMidpoint() + cam_offset 
-	if isPlayer:  return getMidpoint() + Vector2(-100 - cam_offset.x, -100 + cam_offset.y)
-	return getMidpoint() + Vector2(150,-100) + cam_offset
+	var pos = getMidpoint()
+	if isGF: return getMidpoint() + cameraPosition 
+	if isPlayer:  
+		pos.x += -100 - cameraPosition.x
+		pos.y += -100 + cameraPosition.y
+		return pos
+	pos.x += 150 + cameraPosition.x
+	pos.y += -100 + cameraPosition.y
+	return getMidpoint() + Vector2(150,-100) + cameraPosition
 #endregion
 
 func _process(delta) -> void:
