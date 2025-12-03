@@ -550,7 +550,14 @@ func reloadPlayState():
 	)
 
 #region Modding Methods
-func chartEditor(): Global.swapTree(ChartEditorScene,true); pauseSong(false)
+func chartEditor(): 
+	Global.doTransition().finished.connect(func():
+		var chartEditor = ChartEditorScene.instantiate()
+		Global.swapTree(chartEditor,false); 
+		chartEditor.prev_scene = get_script()
+		,CONNECT_ONE_SHOT
+	)
+	pauseSong(false)
 
 func characterEditor():
 	Global.doTransition().finished.connect(func():

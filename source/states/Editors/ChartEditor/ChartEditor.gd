@@ -1,6 +1,7 @@
 extends Node
 const Song = preload("uid://cerxbopol4l1g")
 
+var prev_scene: Variant
 @onready var chess_manager = $ChessControl
 @export var songName: String
 @export var difficulty: String
@@ -69,6 +70,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_SPACE:
 				if Conductor.is_playing: Conductor.pauseSongs()
 				else: Conductor.resumeSongs()
-
+			KEY_BACKSPACE:
+				if prev_scene: Global.swapTree(prev_scene); set_process_input(false)
 static func reset_values():
 	pass

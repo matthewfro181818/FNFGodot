@@ -31,9 +31,9 @@ var splashData: Dictionary
 func _init(): 
 	super._init(true)
 	animation.animation_finished.connect(_on_animation_finished)
+	visibility_changed.connect(_on_visibility_changed)
 
 func _ready() -> void:
-	visibility_changed.connect(_on_visibility_changed)
 	if holdSplash: _update_animation_scale()
 	followStrum()
 
@@ -47,7 +47,7 @@ func show_splash() -> void:
 	else: animation.play_random()
 
 func _update_animation_scale() -> void: 
-	animation.setAnimDataValue(&'hold',&'speed_scale',minf(1.0/Conductor.stepCrochetMs,1.5))
+	animation.setAnimDataValue(&'hold',&'speed_scale',minf(Conductor.stepCrochetMs*15.0,1.5))
 
 func _set_pixel(isPixel: bool):
 	if isPixel == isPixelSplash: return

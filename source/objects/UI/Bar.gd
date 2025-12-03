@@ -24,7 +24,7 @@ var rightBar: CanvasItem = _get_fill_bar(null,true)
 
 var progress: float = 0.5: set = set_progress
 
-var progress_position: Vector2 = Vector2.ZERO
+var progress_position: Vector2
 
 var flip: bool = false: set = set_flip
 

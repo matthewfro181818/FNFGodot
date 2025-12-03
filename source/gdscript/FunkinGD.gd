@@ -277,15 +277,13 @@ static func getRandomBool(chance: int = 50) -> bool: return randi_range(0,100) <
 
 #region Sprite Methods
 static func makeSprite(tag: StringName, path: Variant = null, x: float = 0, y: float = 0) -> FunkinSprite:  ##Creates a [Sprite].
-	var sprite = FunkinSprite.new(false,path)
-	sprite.set_position_xy(x,y)
+	var sprite = FunkinSprite.new(false,path); sprite.set_position_xy(x,y)
 	if tag: sprite.name = tag; _insert_sprite(tag,sprite)
 	return sprite
 
 
 static func makeAnimatedSprite(tag: StringName, path: Variant = null, x: float = 0, y: float = 0) -> FunkinSprite: ##Creates a animated [Sprite].
-	var sprite = FunkinSprite.new(true,path)
-	sprite.set_position_xy(x,y)
+	var sprite = FunkinSprite.new(true,path); sprite.set_position_xy(x,y)
 	if tag: sprite.name = tag; _insert_sprite(tag,sprite)
 	return sprite
  

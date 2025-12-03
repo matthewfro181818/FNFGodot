@@ -32,14 +32,14 @@ static var is_vslice_stage: bool = true
 
 static func loadSprites(stage_json: Dictionary = json) -> void:
 	if !stage_json: return
-	var sprites: Array = []
-	for data in stage_json.get('props',[]):
+	var sprites: Array
+	var props = stage_json.get('props')
+	if props: for data in props:
 		var name = data.get('name','')
 		var image = data.get('assetPath')
-		var position = data.get('position',[0,0])
-		var scale = data.get('scale',[1,1])
-		var scroll = data.get('scroll',[1,1])
-		
+		var position = data.get('position'); if position: position = Vector2(position[0],position[1])
+		var scale = data.get('scale'); if scale: scale = Vector2(scale[0],scale[1])
+		var scroll = data.get('scroll'); if scroll: scroll = Vector2(scroll[0],scroll[1])
 		
 		var sprite: FunkinSprite
 		if image.begins_with("#"):
@@ -51,13 +51,12 @@ static func loadSprites(stage_json: Dictionary = json) -> void:
 			
 			for anim in data.animations:
 				var anim_name = anim.get('name','')
-				sprite.animation.addAnimByPrefix(
-					anim_name,
-					anim.get('prefix',''),
-					anim.get('frameRate',24),
-					anim.get('looped',false),
-					anim.get('frameIndices',[])
-				)
+				var prefix = anim.get('prefix','')
+				var fps = anim.get('frameRate',24)
+				var looped = anim.get('looped',false)
+				var indices = anim.get('frameIndices')
+				if indices: sprite.animation.addAnimByPrefix(anim_name,prefix,fps,looped,indices)
+				else: sprite.animation.addAnimByPrefix(anim_name,prefix,fps,looped)
 				
 				sprite.addAnimOffset(anim_name,anim.get('offsets',Vector2.ZERO))
 			
@@ -87,7 +86,7 @@ static func loadSprites(stage_json: Dictionary = json) -> void:
 		sprite.modulate.a = data.get('alpha',1.0)
 		sprites.append([data.get('zIndex',0),sprite])
 	
-	var front_index: int = 0
+	var front_index: int
 	var got_first_index: bool
 	
 	for chars in stage_json.get('characters',{}):
@@ -113,41 +112,28 @@ static func onBeatHit() -> void:
 	var anim = DANCE_ANIMATIONS[int(danced)]
 	for i in dance_sprites:
 		var sprite = i[1]
-		if sprite and fmod(Conductor.beat,i[0]) == 0:
-			sprite.animation.play(anim if i[2] else DANCE_ANIMATIONS[2])
+		if sprite and !fmod(Conductor.beat,i[0]): sprite.animation.play(anim if i[2] else DANCE_ANIMATIONS[2])
 
 static func loadStage(stage: String) -> Dictionary:
-	var stage_path = Paths.stage(stage)
 	json = getStageBase()
-	json.merge(convert_old_to_new(Paths.loadJson(stage_path)),true)
-	
-	#Remove ".json" from the end of the string
-	stage_path = stage_path.left(-5)
-	
+	json.merge(convert_old_to_new(Paths.loadJson(Paths.stage(stage))),true)
 	Paths.extraDirectory = json.get('directory','')
 	json.path = stage
 	return json
 
-
 static func convert_old_to_new(json: Dictionary):
 	var new_json: Dictionary = getStageBase()
 	
-	for i in json:
-		if new_json.has(i):
-			new_json[i] = json[i]
+	for i in json: if new_json.has(i): new_json[i] = json[i]
 	
 	
-	if json.has('camera_girlfriend'):
-		new_json.characters.gf.cameraOffsets = json.camera_girlfriend
-
-	if json.has('camera_boyfriend'):
-		new_json.characters.bf.cameraOffsets = json.camera_boyfriend
+	if json.has('camera_girlfriend'): new_json.characters.gf.cameraOffsets = json.camera_girlfriend
+	if json.has('camera_boyfriend'): new_json.characters.bf.cameraOffsets = json.camera_boyfriend
 	else:
 		new_json.characters.bf.cameraOffsets[0] += 100
 		new_json.characters.bf.cameraOffsets[1] += 100
 		
-	if json.has('camera_opponent'):
-		new_json.characters.dad.cameraOffsets = json.camera_opponent
+	if json.has('camera_opponent'): new_json.characters.dad.cameraOffsets = json.camera_opponent
 	else:
 		new_json.characters.dad.cameraOffsets[0] -= 150
 		new_json.characters.dad.cameraOffsets[1] += 100
@@ -156,12 +142,8 @@ static func convert_old_to_new(json: Dictionary):
 	var chars = new_json.characters
 	for i in chars:
 		var pos = chars[i].position
-		if i == 'gf':
-			pos[0] -= 280
-			pos[1] -= 700
-		else:
-			pos[0] -= 180
-			pos[1] -= 750
+		if i == 'gf': pos[0] -= 280; pos[1] -= 700
+		else: pos[0] -= 180; pos[1] -= 750
 		
 	new_json.cameraZoom = json.get('defaultZoom',new_json.cameraZoom)
 	new_json.cameraSpeed = json.get('camera_speed',new_json.cameraSpeed)
