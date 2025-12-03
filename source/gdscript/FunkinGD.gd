@@ -1085,3 +1085,5 @@ static func _clear_scripts(absolute: bool = false):
 static func getArrayIndex(array,index: int,default: Variant) -> Variant:
 	if index >= 0 and index < array.size(): return array[index]
 	return default
+
+static func debugPrint(string: Variant, color: Color = Color.WHITE): show_funkin_warning(str(string),color,false)

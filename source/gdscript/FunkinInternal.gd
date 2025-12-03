@@ -222,6 +222,7 @@ static func show_funkin_warning(warning: String, color: Color = Color.RED, only_
 	var text = Global.show_label_warning(warning,5.0)
 	text.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	text.modulate = color 
+	return text
 #endregion
 
 #region Timer Methods
