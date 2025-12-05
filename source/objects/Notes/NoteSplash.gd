@@ -91,7 +91,9 @@ static func loadSplash(style: StringName, splash_name: StringName = &'default', 
 	if !_load_splash_animation(splash,prefix): return null
 	return splash
 
-static func loadSplashFromNote(note: Note) -> NoteSplash: return loadSplash(note.splashStyle,note.splashName,note.splashPrefix,note.isSustainNote)
+static func loadSplashFromNote(note: Note) -> NoteSplash: 
+	return loadSplash(note.splashStyle,note.splashName,note.splashPrefix,note.isSustainNote)
+
 static func _load_splash_animation(splash: NoteSplash,prefix: StringName) -> bool:
 	var data = splash.splashData.data.get(prefix)
 	if !data: data = splash.splashData.data.get(&'default'); if !data: return false

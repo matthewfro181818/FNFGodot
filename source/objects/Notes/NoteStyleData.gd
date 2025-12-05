@@ -41,11 +41,14 @@ static func _check_animation_data(data: Variant) -> void:
 
 static func _fix_data(data: Dictionary, style: StyleType = StyleType.NOTES) -> void:
 	_fix_animation_data(data)
+	var anim_data = data.get(&'data')
+	if !anim_data: return
 	match style:
 		StyleType.SPLASH:
-			for i in data.data.values():
+			for i in anim_data.values():
 				if i.has(&'start'): _check_animation_data(i.start)
 				if i.has(&'hold'): _check_animation_data(i.hold)
 				if i.has(&'end'): _check_animation_data(i.end)
-		_: for i in data.data.values(): _check_animation_data(i)
+		_: 
+			for i in anim_data.values(): _check_animation_data(i)
 		

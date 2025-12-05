@@ -961,8 +961,8 @@ static func disableCallback(script: Variant, function: StringName):
 	var func_scripts = method_list.get(function); if !func_scripts: return
 	func_scripts.erase(_get_script(script))
 
-
-static func loadScript(path: String) -> GDScript:
+##Creates a new script from [param path].
+static func loadScript(path: String) -> GDScript: 
 	path = Paths.detectFileFolder(_script_path(path))
 	return _load_script_no_check(path) if path else null
 

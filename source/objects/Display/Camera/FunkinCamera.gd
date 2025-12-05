@@ -314,7 +314,7 @@ func _update_pivot() -> void:
 	var _real_pivot = pivot_offset - _scroll_position
 	var _scroll_pivot = _real_pivot
 	if zoom != 1.0: _scroll_pivot *= zoom
-	if angle_degrees: _scroll_pivot = _scroll_pivot.rotated(-angle_degrees)
+	if angle_degrees: _scroll_pivot = _scroll_pivot.rotated(angle_degrees)
 	_scroll_pivot_offset = (_scroll_pivot - _real_pivot)
 
 func _update_angle(update_pivo: bool = true)  -> void:

@@ -44,7 +44,7 @@ var keyCount: int = 4: ##The amount of notes that will be used, default is [b]4[
 	set(value): 
 		keyCount = value
 		var length = keyCount*2
-		hitNotes.resize(value)
+		_notes_to_hit.resize(value)
 		defaultStrumPos.resize(length)
 		defaultStrumAlpha.resize(length)
 
@@ -77,7 +77,7 @@ var respawnNotes: bool
 var notes: SpriteGroup = SpriteGroup.new()
 var noteSpawnTime: float = NOTE_SPAWN_TIME
 
-var hitNotes: Array[Note]
+var _notes_to_hit: Array[Note]
 
 var canHitNotes: bool = true
 
@@ -215,7 +215,7 @@ func seek_to(time: float, kill_notes: bool = true):
 	var time_offset: float = time + 1000
 	for i in notes.members: if i.strumTime < time_offset: i.kill()
 	
-	while _unspawnIndex < unspawnNotes.size():
+	while _unspawnIndex < _unspawnNotesLength:
 		if unspawnNotes[_unspawnIndex].strumTime > time_offset: break
 		_unspawnIndex += 1
 	
@@ -334,7 +334,7 @@ func updateNotes():
 	_check_unspawn_notes()
 	_check_respawn_notes()
 	
-	hitNotes.fill(null) #Detect notes that can hit
+	_notes_to_hit.fill(null) #Detect notes that can hit
 	if !notes.members: return
 	
 	var members = notes.members
@@ -365,11 +365,12 @@ func _check_respawn_notes() -> void:
 		_respawnIndex += 1
 
 func _check_hit_notes() -> void:
-	var index: int = hitNotes.size()
+	var index: int = _notes_to_hit.size()
 	while index: 
 		index -= 1
-		var i = hitNotes[index]
-		if i: hitNotes[index] = null; if Input.is_action_just_pressed(i.hit_action): preHitNote(i)
+		var i = _notes_to_hit[index]
+		_notes_to_hit[index] = null
+		if i and Input.is_action_just_pressed(i.hit_action): preHitNote(i)
 
 ##Spawns the note
 func spawnNote(note: Note) -> void: if note: addNoteToGroup(note,note.noteGroup if note.noteGroup else notes)
@@ -408,8 +409,8 @@ func updateNote(n: Note) -> bool:
 		elif !n.isEndSustain and Input.is_action_just_released(hit_action): noteMiss(n,false)
 		return true
 	
-	var l = hitNotes[n.noteData]
-	if !l or absf(n.distance) < absf(l.distance): hitNotes[n.noteData] = n
+	var l = _notes_to_hit[n.noteData]
+	if !l or absf(n.distance) < absf(l.distance): _notes_to_hit[n.noteData] = n
 	return true
 
 func preHitNote(note: Note):
@@ -425,21 +426,30 @@ func hitNote(note: Note) -> void: ##Called when the hits a [NoteBase]
 	var playerNote = isPlayerNote(note)
 	var strum: StrumNote = note.strumNote
 	if note.isEndSustain: 
-		if !playerNote: _hide_hold_splash_from_note(note)
+		if !playerNote: _hide_hold_splash_from_strum(strum)
 		else: 
 			var holdSplash: NoteSplash = grpNoteHoldSplashes.get(strum.get_instance_id()); 
-			if holdSplash: holdSplash.animation.play(&'end')
+			if holdSplash: 
+				holdSplash.animation.play(&'end'); 
+				holdSplash.animation.curAnim.animation_finished.connect(
+					_hide_hold_splash_from_strum.bind(strum), CONNECT_ONE_SHOT
+				)
 	if splashAllowed(note): createSplash(note);
 	note._on_hit()
 	_strum_confirm_from_note(note)
 
+func _disable_hold_splash_from_strum(strum: StrumNote):
+	if !strum: return
+	var id = strum.get_instance_id()
+	var splash = grpNoteHoldSplashes.get(id)
+	if splash: splash.visible = false; grpNoteHoldSplashes[id] = null
 func isPlayerNote(note: Note) -> bool: return note.mustPress != playAsOpponent
 
 func noteMiss(note: Note, kill_note: bool = true) -> void: ##Called when the player miss a [Note]
 	if !note:return
 	note.missed = true
 	note.judgementTime = _songPos
-	if note.isSustainNote: _disable_note_sustains(note.noteParent); _hide_hold_splash_from_note(note)
+	if note.isSustainNote: _disable_note_sustains(note.noteParent); _hide_hold_splash_from_strum(note.strumNote)
 	if kill_note: note.kill()
 
 func reloadNotes() -> void: 
@@ -493,16 +503,17 @@ func _get_splash_storage(style: StringName, name: StringName, prefix: StringName
 	return _splashes_loaded.get_or_add(style,{}).get_or_add(name,{}).get_or_add(prefix,[])
 
 func _check_splash_from_note(note: Note) -> NoteSplash:
-	if !note.isSustainNote: return _check_splash(note.splashStyle,note.splashName,note.splashPrefix)
+	return _check_sustain_splash_avaliable(note) if note.isSustainNote else\
+		_check_splash(note.splashStyle,note.splashName,note.splashPrefix)
+
+func _check_sustain_splash_avaliable(note: Note):
 	if !note.strumNote: return
-	
 	var splash: NoteSplash = grpNoteHoldSplashes.get(note.strumNote.get_instance_id())
 	if splash and\
 		splash.splashStyle == note.splashStyle and \
 		splash.splashPrefix == note.splashPrefix and \
 		splash.splashName == note.splashName: return splash
 	return _check_splash(note.splashStyle,note.splashName,note.splashPrefix)
-
 
 func _check_splash(style: StringName, splash_name: StringName, prefix: StringName) -> NoteSplash:
 	for s in _get_splash_storage(style,splash_name,prefix): if !s.visible: return s
@@ -512,9 +523,9 @@ func splashAllowed(n: Note) -> bool:
 	if n.isSustainNote: return !n.splashDisabled and splashesEnabled and n.ratingMod <= 1 and !n.isBeingDestroyed
 	return !n.splashDisabled and splashesEnabled and n.ratingMod <= 1 and (isPlayerNote(n) or opponentSplashes)
 
-func _hide_hold_splash_from_note(note: Note):
-	if !note or !note.strumNote: return
-	var id = note.strumNote.get_instance_id()
+func _hide_hold_splash_from_strum(strum: StrumNote):
+	if !strum: return
+	var id = strum.get_instance_id()
 	var splash = grpNoteHoldSplashes.get(id)
 	if splash: splash.visible = false; grpNoteHoldSplashes[id] = null
 #endregion

@@ -1,5 +1,6 @@
 extends Node
 const TRANSITION = preload("res://source/objects/Display/Transition.gd")
+const Sparrow = preload("uid://cgia5q753s34c")
 signal onSwapTree
 
 static var scene: Node
@@ -10,6 +11,7 @@ var arguments = FunkinGD.arguments
 var method_list = FunkinGD.method_list
 var is_transiting: bool = false
 
+var anims = Sparrow.sparrows_loaded
 var current_transition: TRANSITION
 
 var error_prints: Array[Label]

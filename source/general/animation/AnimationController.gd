@@ -81,7 +81,7 @@ var paused: bool = false: set = pause
 
 ##If [code]true[/code], the animation will restarts when it finishes.
 @export var looped: bool = false
-var _float_frame: float = 0.0
+var _float_frame: float
 
 
 ##If the animation is playing.

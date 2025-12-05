@@ -151,9 +151,13 @@ func followStrum(strum: StrumNote = strumNote) -> void:
 
 func reloadNote() -> void:
 	noteScale = styleData.get(&'scale',NoteStyleData.DEFAULT_NOTES_SCALE)
-	var data = styleData.data.get(_get_data_animation_name())
-	if data: _reload_note_from_data(data)
+	var data = styleData.get(&'data');
+	if data:
+		data = styleData.data.get(_get_data_animation_name())
+		if data: _reload_note_from_data(data)
+		else: _reload_note_without_data()
 	else: _reload_note_without_data()
+	
 	setGraphicScale(Vector2(noteScale,noteScale))
 
 func _reload_note_from_data(data: Dictionary) -> void:

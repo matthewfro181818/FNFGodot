@@ -38,8 +38,10 @@ static func loadSprites(stage_json: Dictionary = json) -> void:
 		var name = data.get('name','')
 		var image = data.get('assetPath')
 		var position = data.get('position'); if position: position = Vector2(position[0],position[1])
-		var scale = data.get('scale'); if scale: scale = Vector2(scale[0],scale[1])
-		var scroll = data.get('scroll'); if scroll: scroll = Vector2(scroll[0],scroll[1])
+		var scale = data.get('scale'); 
+		scale = Vector2(scale[0],scale[1]) if scale else  Vector2.ONE
+		var scroll = data.get('scroll'); 
+		scroll = Vector2(scroll[0],scroll[1]) if scroll else Vector2.ONE
 		
 		var sprite: FunkinSprite
 		if image.begins_with("#"):

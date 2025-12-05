@@ -10,21 +10,22 @@ const deg_90 = deg_to_rad(-90)
 ##loadSparrow(Paths.detectFileFolder("images/Image.xml")) #Also works if the file are found.
 ##[/codeblock]
 static func loadSparrow(file: String) -> Dictionary[StringName,Array]:
+	
 	if !file.ends_with('.xml'): file += '.xml'
+	
 	var sparrow: Dictionary[StringName,Array] = sparrows_loaded.get(
 		file,
 		Dictionary({},TYPE_STRING_NAME,&'',null,TYPE_ARRAY,&"",null)
-	)
+	) #Aqui, ele já salva o arquivo no Dictionary tlgd
 	if sparrow: return sparrow
 	if !FileAccess.file_exists(file): return {}
+	
 	parser.open(file)
-	while parser.read() == OK:
+	while parser.read() == OK: #Aqui começa a ler
 		if parser.get_node_type() != XMLParser.NODE_ELEMENT: continue
 		var xmlName: StringName = parser.get_named_attribute_value_safe('name')
 		if !xmlName:  continue;
-
-		#var frame: int = xmlName.right(4).to_int()
-		xmlName = xmlName.left(-4)
+		xmlName = xmlName.left(-4) #< ---Isso aqui, ele remove os numeros finais da string, os "0000"
 		
 		var animationFrames: Array[Dictionary] = sparrow.get_or_add(
 			xmlName,
@@ -36,7 +37,7 @@ static func loadSparrow(file: String) -> Dictionary[StringName,Array]:
 			parser.get_named_attribute_value('y').to_float(),
 			parser.get_named_attribute_value('width').to_float(),
 			parser.get_named_attribute_value('height').to_float()
-		)
+		) #Aqui a data
 		var s: Vector2 = region_data.size
 		var f_s: Vector2 = s
 		var r: float
@@ -58,13 +59,7 @@ static func loadSparrow(file: String) -> Dictionary[StringName,Array]:
 				parser.get_named_attribute_value('frameHeight').to_float()
 			)
 			frameData[&"frameSize"] = f_s
-		
-		
+			
 		animationFrames.append(frameData)
-		#var frames = animationFrames.size()
-		#if frames == frame: animationFrames.append(frameData); continue
-		#while frames <= frame: animationFrames.append({}); frames += 1
-		#animationFrames[frame] = frameData
-	#for i in sparrow.values(): if i and !i[0]: i.remove_at(0)
 	sparrows_loaded[file] = sparrow
 	return sparrow

@@ -120,10 +120,10 @@ static func get_arguments(script: Object) -> Dictionary[StringName,Variant]:
 		
 	return functions
 
-static func _insert_script(script: Object, path: String = '') -> bool:
+static func _insert_script(script: Object, tag: String = '') -> bool:
 	if !script: return false
 	var args = get_arguments(script)
-	scriptsCreated[path] = script
+	scriptsCreated[tag] = script
 	arguments[script.get_instance_id()] = args
 	
 	

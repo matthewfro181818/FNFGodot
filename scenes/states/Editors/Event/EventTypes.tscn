@@ -132,7 +132,7 @@ func _update_size():
 custom_minimum_size = Vector2(0, 125)
 offset_right = 40.0
 offset_bottom = 15.0
-text = "---Variable---"
+text = "--- Variable ---"
 script = SubResource("GDScript_mpvlj")
 
 [node name="Container" type="VBoxContainer" parent="."]
