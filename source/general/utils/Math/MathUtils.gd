@@ -71,9 +71,9 @@ const math_types: Dictionary = {
 	TYPE_COLOR: true,
 }
 
-static func type_via_string(type: StringName) -> int: return type_strings.get(type.to_lower(),TYPE_NIL)
-	
-static func convert_type_via_string(value: Variant, type: StringName) -> Variant: return type_convert(value,type_via_string(type))
+static func get_type_by_name(type: StringName) -> int: return type_strings.get(type.to_lower() as StringName,TYPE_NIL)
+
+static func convert_get_type_by_name(value: Variant, type: StringName) -> Variant: return type_convert(value,get_type_by_name(type))
 	
 static func get_new_value(type: int) -> Variant:
 	match type:

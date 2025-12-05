@@ -117,7 +117,7 @@ func loadSongsStreams(folder: String = SongData.audioFolder, suffix: String = So
 	var player_name = songJson.get('opponentVocals',songJson.get('player1',''))
 	var opponent_name = songJson.get('playerVocals',songJson.get('player2',''))
 	
-	var paths: Array[PackedStringArray] = [
+	var paths: Array = [
 		#Inst Path
 		['Inst'+suffix,'Inst'] if suffix else ['Inst'], 
 		#Opponent Song Paths

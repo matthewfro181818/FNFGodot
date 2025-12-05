@@ -7,6 +7,7 @@ class_name DynamicFileMenuButton extends MenuButton
 func _init(): flat = false
 func _ready() -> void: _refresh()
 func _refresh(): 
+	if !dir_to_look.ends_with("/"): dir_to_look += '/'
 	if !dir_to_look: return
 	var popup = get_popup()
 	popup.clear()

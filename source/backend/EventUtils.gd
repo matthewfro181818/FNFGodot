@@ -59,12 +59,12 @@ static var easing_types: PackedStringArray
 
 const default_variables = {
 	&'value1': {
-		&'type': TYPE_STRING,
-		&'default_value': ''
+		&'type': TYPE_STRING_NAME,
+		&'default_value': &''
 	},
 	&'value2': {
-		&'type': TYPE_STRING,
-		&'default_value': ''
+		&'type': TYPE_STRING_NAME,
+		&'default_value': &''
 	}
 }
 
@@ -85,6 +85,7 @@ static func _get_transitions():
 		trans.append("#"+i)
 		if i == &'': trans.append("Linear"); continue
 		for e in TweenService.easings: trans.append(i+e)
+		
 	return trans
 
 ##Return the variables of the a custom_event using "@vars" in his text.[br]
@@ -92,13 +93,21 @@ static func _get_transitions():
 ##[b]Example:[/b] [code]{"value1": [TYPE_STRING,''], "value2": [TYPE_FLOAT,0.0]}[/code]
 static func get_event_variables(event_name: StringName) -> Dictionary:
 	if event_name in event_variables: return event_variables[event_name]
-	var event_data: Dictionary[StringName,Variant] = DictUtils.getDictTyped(Paths.loadJson('custom_events/'+event_name+'.json'),TYPE_STRING_NAME)
+	var vars = get_event_variables_no_cache(event_name)
+	event_variables[event_name] = vars
+	return vars
+
+
+static func get_event_variables_no_cache(event_name: StringName) -> Dictionary:
+	var event_data: Dictionary[StringName,Variant] = DictUtils.getDictTyped(
+		Paths.loadJsonNoCache('custom_events/'+event_name+'.json'),
+		TYPE_STRING_NAME
+	)
 	if !event_data or !event_data.has(&'variables'): return default_variables
-	
-	var variables: Dictionary
-	for i in event_data.variables: variables[i] = _get_value_data(event_data.variables[i])
-	event_variables[event_name] = variables
-	return variables
+	DictUtils.convertKeysToStringNames(event_data.variables,true)
+	var variables = event_data.variables
+	for i in variables: _fix_variable_data(variables[i])
+	return event_data
 
 static func get_event_default_values(event_name: StringName) -> Dictionary[StringName,Variant]:
 	var default: Dictionary[StringName,Variant]
@@ -106,27 +115,19 @@ static func get_event_default_values(event_name: StringName) -> Dictionary[Strin
 	for i in variables: default[i] = variables[i].default_value
 	return default
 
-static func _get_value_data(value: Dictionary):
-	var type: StringName = value.get('type','String')
+static func _fix_variable_data(data: Dictionary) -> Dictionary:
+	var type: StringName = data.get(&'type',&'String')
 	
 	var value_type: int
-	var options: Array = value.get('options',[])
+	var options: Array = data.get(&'options',[])
 	match type:
-		'EasingType':
+		&'EasingType':
 			options.append_array(easing_types)
 			value_type = TYPE_STRING
-		_: value_type = MathUtils.type_via_string(type)
+		_: value_type = MathUtils.get_type_by_name(type)
 		
-	var default_value: Variant = value.get('default_value')
-	if !default_value or typeof(default_value) != value_type:
-		default_value = MathUtils.get_new_value(value_type)
-	
-	var data: Dictionary[StringName,Variant] = {
-		&'type': value_type,
-		&'default_value': default_value
-	}
-
-	var look_at = value.get('look_at')
+	var default_value: Variant = data.get('default_value')
+	var look_at = data.get('look_at')
 	if look_at:
 		var directory = look_at.get('directory')
 		if directory:
@@ -142,65 +143,18 @@ static func _get_value_data(value: Dictionary):
 					options.append('#'+mod)
 				files_founded.append(file)
 				options.append(file)
+	if options: data.options = options; default_value = options[0]
+	else: default_value = type_convert(default_value,value_type)
 	
-	if options: data.options = options
+	data.type = value_type
+	
+	match value_type:
+		TYPE_COLOR: data.default_value = Color.html(default_value)
+		TYPE_VECTOR2: data.default_value = Vector2(default_value[0],default_value[1])
+		TYPE_VECTOR2I: data.default_value = Vector2i(default_value[0],default_value[1])
+		TYPE_VECTOR3: data.default_value = Vector3(default_value[0],default_value[1],default_value[2])
+		TYPE_VECTOR3I: data.default_value = Vector3i(default_value[0],default_value[1],default_value[2])
+		_: data.default_value = default_value
+	
 	return data
-
-static func _replace_look_at_to_enum(string: String) -> String:
-	#Search for "LookAt" types
-	var look_at_data = look_for_function_in_line(string,'LookAt')
-	var look_at_created = look_at_data[0]
-	
-	string = look_at_data[1]
-	
-	var last_mod: String = ''
-	for i in look_at_created:
-		var data = look_at_created[i]
-		var extension = data[1] if data.size() > 1 else ''
-		var files = Paths.getFilesAt(data[0],true,extension)
-		
-		var func_data: String = ''
-		
-		for f in files:
-			var mod = Paths.getModFolder(f)
-			if last_mod != mod:
-				func_data += ',#'+mod
-				last_mod = mod
-			func_data += ','+f.get_file()
-		string = string.replace(i,'Enum('+func_data.right(-1)+')')
-	return string
-	
-static func look_for_function_in_line(string: String, function: String):
-	var index: int = 0
-	var functions_created = {}
-	
-	var function_length = function.length()
-	while true:
-		index = string.find(function,index)
-		if index == -1: break
-		
-		var index_find = index
-		index += function_length
-		
-		var func_data = string.right(-index-1)
-		var func_name = function+String.num_int64(index)
-		
-		var variables = func_data.left(StringUtils._find_last_parentese(func_data)+1)
-		var variables_array = StringUtils.get_function_data(variables)[1]
-		
-		functions_created[func_name] = variables_array
-		string = string.erase(index_find,function_length+variables.length()+1)
-		string = string.insert(index_find,func_name)
-	
-	return [functions_created,string]
-	
-static func get_event_description(event_name: StringName) -> String:
-	var text = Paths.text('custom_events/'+event_name)
-	if !text:
-		return ''
-	var new_description: String = ''
-	for i in text.split('\n'):
-		if !i.begins_with('@vars'):
-			new_description += i
-	return new_description
 #endregion

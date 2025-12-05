@@ -1,10 +1,15 @@
-[gd_scene load_steps=9 format=3 uid="uid://sy6dvoqbgemm"]
+[gd_scene load_steps=14 format=3 uid="uid://sy6dvoqbgemm"]
 
 [ext_resource type="Texture2D" uid="uid://0s5mjauudmx5" path="res://icons/float.svg" id="1_mpvlj"]
 [ext_resource type="Texture2D" uid="uid://da5srva8il7lx" path="res://icons/String.svg" id="2_vgfox"]
 [ext_resource type="Texture2D" uid="uid://dd0ei05r7sx3n" path="res://icons/int.svg" id="3_igspc"]
 [ext_resource type="Texture2D" uid="uid://bc5yemty4du7j" path="res://icons/StringName.svg" id="4_pnupp"]
+[ext_resource type="Texture2D" uid="uid://yrmj8decr2u3" path="res://icons/Vector2.svg" id="5_awd17"]
 [ext_resource type="Texture2D" uid="uid://crlp1oar51jy5" path="res://icons/Color.svg" id="5_vgfox"]
+[ext_resource type="Texture2D" uid="uid://cx00b4ogitig6" path="res://icons/Vector2i.svg" id="6_dxt6o"]
+[ext_resource type="Texture2D" uid="uid://f2q3yboqpmvk" path="res://icons/bool.svg" id="6_igspc"]
+[ext_resource type="Texture2D" uid="uid://p2u334l5qsi6" path="res://icons/Vector3.svg" id="7_apu2u"]
+[ext_resource type="Texture2D" uid="uid://cqkrggmr3gj4a" path="res://icons/Vector3i.svg" id="8_0n2xo"]
 
 [sub_resource type="GDScript" id="GDScript_mpvlj"]
 script/source = "@tool
@@ -15,79 +20,80 @@ const NumberRangeScript = preload(\"uid://bscbt2dibch22\")
 const VariableScene = preload(\"uid://sy6dvoqbgemm\")
 
 var data: Dictionary = {
-	\"default_value\": 0,
-	\"type\": \"Int\",
-	\"options\": [],
+	&\"default_value\": 0,
+	&\"type\": TYPE_INT,
+	&\"options\": [],
 }
 
 
 @onready var default_value_parent = $\"Container/Default Value\"
 @onready var container = $\"Container\"
-var default_value_node: Control
-
+@onready var type_menu: MenuButton = $Container/Type/Menu
+var default_value_node: Control:
+	set(val): 
+		if default_value_node: default_value_node.queue_free()
+		default_value_node = val
+	
 func _ready() -> void:
-	_changed_type(data.get('type','String'))
+	_on_type_changed()
 	renamed.connect(_renamed)
 	_renamed()
 
 func _renamed(): text = '--- '+name+' ---'
 
+func _on_container_minimum_size_changed() -> void: custom_minimum_size.y = container.size.y + container.position.y
 
-func _create_range_number(is_int: bool = false) -> void:
-	if default_value_node is NumberRangeScript: default_value_node.int_value = is_int; return
-	if default_value_node: default_value_node.queue_free()
-	default_value_node = NumberRangeScene.instantiate()
-	default_value_parent.add_child(default_value_node)
-	default_value_node = default_value_node
-	default_value_node.value_changed.connect(_value_range_changed)
-	default_value_node.int_value = is_int
 
-func _value_range_changed(val: Variant): data.default_value = val
-
-func _create_line_edit() -> void:
-	if default_value_node is LineEdit: default_value_node.text = data.get('default_value',''); return
-	if default_value_node: default_value_node.queue_free()
-	default_value_node = LineEdit.new()
-	default_value_node.size = Vector2(160,30)
-	
-	default_value_node.text_changed.connect(_line_edit_text_changed)
-	default_value_parent.add_child(default_value_node)
-	default_value_node.text = data.get('default_value','')
-
-func _line_edit_text_changed(t: String): data.default_value = t
-
-func _create_color_range() -> void:
-	if default_value_node: default_value_node.queue_free()
-	default_value_node = ColorPickerButton.new()
-	default_value_node.size = Vector2(160,30)
-	default_value_parent.add_child(default_value_node)
-	default_value_node.color_changed.connect(_color_range_changed)
-	default_value_node = default_value_node
-	default_value_node.color = Color.html(data.get('default_value','fffffff'))
-
-func _color_range_changed(col: Color): 
-	default_value_node.color = col
-	data.default_value = col.to_html()
-
-func _create_value_node():
-	match data.get('type'):
-		\"Int\":_create_range_number(true)
-		\"Float\": _create_range_number()
-		\"Color\": _create_color_range()
-		_: _create_line_edit()
-	default_value_node.position = Vector2(130,-default_value_node.size.y/4.0)
-
-func _changed_type(type: String) -> void:
-	data.type = type
-	
-	var old_type = typeof(data.get('default_value',''))
-	var type_int = MathUtils.type_via_string(type)
-	if old_type != type_int: data.default_value = MathUtils.get_new_value(type_int)
+func _on_type_changed():
+	var type = data.get(&'type')
+	type = type_string(type) if type else 'String'
+	type_menu.icon = load(\"res://icons/\"+type+'.svg')
 	_create_value_node()
 
-func _on_container_minimum_size_changed() -> void: 
-	custom_minimum_size.y = container.size.y + container.position.y
-	
+func _create_value_node():
+	match data.get(&'type'):
+		TYPE_INT:_create_range_number(true)
+		TYPE_FLOAT: _create_range_number()
+		TYPE_COLOR: _create_color_range()
+		TYPE_BOOL: _create_bool()
+		TYPE_STRING_NAME,TYPE_STRING: _create_line_edit()
+	default_value_parent.add_child(default_value_node)
+	default_value_node.position = Vector2(130,-default_value_node.size.y/4.0)
+
+func _changed_type(type: Variant.Type) -> void:
+	if data.type == type: return
+	data.type = type
+	data.default_value = type_convert(data.default_value,type)
+	_on_type_changed()
+
+
+
+
+func _value_changed(v: Variant): data.default_value = v
+func _create_range_number(is_int: bool = false) -> void:
+	if default_value_node is NumberRangeScript: default_value_node.int_value = is_int; return
+	default_value_node = NumberRangeScene.instantiate()
+	default_value_node.value_changed.connect(_value_changed)
+	default_value_node.int_value = is_int
+
+func _create_line_edit() -> void:
+	if default_value_node is LineEdit: default_value_node.text = data.default_value; return
+	default_value_node = LineEdit.new()
+	default_value_node.size = Vector2(160,30)
+	default_value_node.text = data.get('default_value','')
+	default_value_node.text_changed.connect(_value_changed)
+
+func _create_color_range() -> void:
+	default_value_node = ColorPickerButton.new()
+	default_value_node.size = Vector2(160,30)
+	default_value_node.color_changed.connect(_value_changed)
+
+
+func _create_bool():
+	default_value_node = CheckButton.new()
+	default_value_node.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	default_value_node.size = Vector2(10,30)
+	default_value_node.toggled.connect(_value_changed)
 "
 
 [sub_resource type="GDScript" id="GDScript_igspc"]
@@ -97,15 +103,9 @@ var popup = get_popup()
 
 @onready var parent = $\"../../..\"
 
-var _last_index: int = -1
-
 func _init() -> void: popup.index_pressed.connect(_checked)
-func _ready() -> void: _checked.call_deferred(0)
-func _checked(index: int) -> void:
-	if _last_index == index: return
-	_last_index = index
-	icon = popup.get_item_icon(index)
-	parent._changed_type(popup.get_item_text(index))
+func _checked(index: int) -> void: 
+	parent._changed_type(popup.get_item_id(index))
 	
 "
 
@@ -128,66 +128,80 @@ func _update_size():
 	parent.custom_minimum_size.y = h
 "
 
-[node name="Variable" type="Label"]
+[node name="Variable" type="Label" unique_id=297907093]
 custom_minimum_size = Vector2(0, 125)
 offset_right = 40.0
 offset_bottom = 15.0
 text = "--- Variable ---"
 script = SubResource("GDScript_mpvlj")
 
-[node name="Container" type="VBoxContainer" parent="."]
+[node name="Container" type="VBoxContainer" parent="." unique_id=853001189]
 layout_mode = 0
 offset_top = 16.0
 offset_right = 132.0
 offset_bottom = 104.0
 theme_override_constants/separation = 10
 
-[node name="Type" type="Label" parent="Container"]
+[node name="Type" type="Label" parent="Container" unique_id=1830748833]
 custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
 text = "Type:"
 vertical_alignment = 1
 
-[node name="Menu" type="MenuButton" parent="Container/Type"]
+[node name="Menu" type="MenuButton" parent="Container/Type" unique_id=1273963427]
 layout_mode = 0
 offset_left = 47.0
 offset_top = 2.0
 offset_right = 121.0
 offset_bottom = 30.0
-icon = ExtResource("1_mpvlj")
 flat = false
 icon_alignment = 1
 expand_icon = true
-item_count = 5
-popup/item_0/text = "Float"
-popup/item_0/icon = ExtResource("1_mpvlj")
-popup/item_0/id = 0
+item_count = 10
+popup/item_0/text = "Bool"
+popup/item_0/icon = ExtResource("6_igspc")
+popup/item_0/id = 1
 popup/item_1/text = "int"
 popup/item_1/icon = ExtResource("3_igspc")
-popup/item_1/id = 3
-popup/item_2/text = "String"
-popup/item_2/icon = ExtResource("2_vgfox")
-popup/item_2/id = 1
-popup/item_3/text = "StringName"
-popup/item_3/icon = ExtResource("4_pnupp")
-popup/item_3/id = 2
-popup/item_4/text = "Color"
-popup/item_4/icon = ExtResource("5_vgfox")
-popup/item_4/id = 4
+popup/item_1/id = 2
+popup/item_2/text = "Float"
+popup/item_2/icon = ExtResource("1_mpvlj")
+popup/item_2/id = 3
+popup/item_3/text = "String"
+popup/item_3/icon = ExtResource("2_vgfox")
+popup/item_3/id = 4
+popup/item_4/text = "Vector2"
+popup/item_4/icon = ExtResource("5_awd17")
+popup/item_4/id = 5
+popup/item_5/text = "Vector2i"
+popup/item_5/icon = ExtResource("6_dxt6o")
+popup/item_5/id = 6
+popup/item_6/text = "Vector3"
+popup/item_6/icon = ExtResource("7_apu2u")
+popup/item_6/id = 9
+popup/item_7/text = "Vector3i"
+popup/item_7/icon = ExtResource("8_0n2xo")
+popup/item_7/id = 10
+popup/item_8/text = "Color"
+popup/item_8/icon = ExtResource("5_vgfox")
+popup/item_8/id = 20
+popup/item_9/text = "StringName"
+popup/item_9/icon = ExtResource("4_pnupp")
+popup/item_9/id = 21
 script = SubResource("GDScript_igspc")
 
-[node name="Default Value" type="Label" parent="Container"]
+[node name="Default Value" type="Label" parent="Container" unique_id=698784963]
 custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
 text = "Default Value: "
 
-[node name="Description" type="Label" parent="Container"]
+[node name="Description" type="Label" parent="Container" unique_id=1677123546]
 custom_minimum_size = Vector2(0, 29)
 layout_mode = 2
 text = "Description:"
 vertical_alignment = 1
 
-[node name="Text" type="TextEdit" parent="Container/Description"]
+[node name="Text" type="TextEdit" parent="Container/Description" unique_id=1212366063]
 layout_mode = 0
 offset_left = 110.0
 offset_right = 359.0
@@ -201,4 +215,3 @@ script = SubResource("GDScript_vgfox")
 metadata/_custom_type_script = "uid://dugs5fa627cfl"
 
 [connection signal="minimum_size_changed" from="Container" to="." method="_on_container_minimum_size_changed"]
-[connection signal="minimum_size_changed" from="Container/Default Value/ButtonRange" to="Container/Default Value/ButtonRange" method="_on_minimum_size_changed"]

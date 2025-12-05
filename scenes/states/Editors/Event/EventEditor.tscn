@@ -1,12 +1,13 @@
-[gd_scene load_steps=5 format=3 uid="uid://dr0s73rjg4kxf"]
+[gd_scene load_steps=6 format=3 uid="uid://dr0s73rjg4kxf"]
 
 [ext_resource type="Script" uid="uid://dsm0luhaq03go" path="res://source/custom_nodes/ChessMovement.gd" id="1_yx6pg"]
 
 [sub_resource type="GDScript" id="GDScript_jcq8v"]
+resource_name = "Editor"
 script/source = "extends Node2D
 
 const VariableScene = preload(\"uid://sy6dvoqbgemm\")
-
+const EventUtils = preload(\"uid://dqymf0mowy0dt\")
 @onready var dialog: FileDialog = $FileDialog
 var cur_event_data: Dictionary = {
 	'variables': [],
@@ -35,59 +36,82 @@ func _on_file_selected(file: String):
 func _on_cancel_load():
 	dialog.files_selected.disconnect(_on_file_selected)
 
-func loadEvent(absolute_path: String): cur_event_data = Paths.loadJson(absolute_path); _load_event_info()
+func loadEvent(event_name: StringName): 
+	cur_event_data = EventUtils.get_event_variables_no_cache(event_name); 
+	_load_event_info()
 
 func _load_event_info():
 	var variables = cur_event_data.get('variables')
+	for i in variables_container.get_children(): variables_container.remove_child(i); i.queue_free()
 	for i in variables:
 		var v = VariableScene.instantiate()
 		v.name = i
 		v.data = variables[i]
 		variables_container.add_child(v)
-
-
-func create_variable() -> Dictionary:
-	var variable = VariableScene.instantiate()
-	return variable.data
-
+		variables_container.add_child(HSeparator.new())
+		create_interator_buttons.call_deferred(v)
+		
+func create_interator_buttons(variable: Node) -> void:
+	var delete_button: Button = _create_button()
+	delete_button.icon = load(\"uid://d3ler7oyh2kc5\")
+	delete_button.position.x = variable.size.x - 24
+	variable.add_child(delete_button)
+	
+	var down_button: Button = _create_button()
+	down_button.icon = load(\"uid://cggfq2j244bhe\")
+	down_button.position.x = delete_button.position.x - 24
+	variable.add_child(down_button)
+	
+	var top_button: Button = _create_button()
+	top_button.icon = load(\"uid://bgyflmtxhf8p3\")
+	top_button.position.x = down_button.position.x - 24
+	variable.add_child(top_button)
+	
 func create_variable_from_data(data: Dictionary):
 	var variable = VariableScene.instantiate()
 	variable.name = data.get('name','value1')
 	var type = data.get('type')
-	type = MathUtils.type_via_string(type) if type else TYPE_STRING
+	type = MathUtils.get_type_by_name(type) if type else TYPE_STRING
 	variable.data.default_value = data.get('default_value',MathUtils.get_new_value(type))
 	
+func _create_button() -> Button:
+	var button = Button.new()
+	button.add_theme_constant_override(\"icon_max_width\",16)
+	button.tree_entered.connect(button.set_anchors_preset.bind(Control.PRESET_TOP_RIGHT),CONNECT_ONE_SHOT)
+	return button
+"
+
+[sub_resource type="GDScript" id="GDScript_05vim"]
+resource_name = "Container"
+script/source = "extends VBoxContainer
+
+
+func _on_child_order_changed() -> void:
+	for i in get_children():pass
 "
 
 [sub_resource type="GDScript" id="GDScript_yx6pg"]
+resource_name = "EventCode"
 script/source = "extends CodeEdit
 
-
-# Called when the node enters the scene tree for the first time.
-func _ready() -> void:
-	_set_default_code()
+@onready var default_code = text
+func _ready() -> void: _set_default_code()
 
 
-func _set_default_code():
-	text = \"\"\"extends FunkinGD
-func onLocalEvent(variables: Dictionary): #Called when this event is trigged.
-	pass
-\"\"\"
-	
+func _set_default_code() -> void: text = default_code
 "
 
 [sub_resource type="GDScript" id="GDScript_lohrh"]
+resource_name = "EventsMenu"
 script/source = "extends DynamicFileMenuButton
 
-func _ready():
-	super._ready();
-	get_popup().index_pressed.connect(func(i): $\"../..\".loadEvent(\"custom_events/\"+get_popup().get_item_text(i)))
+func _ready():super._ready(); get_popup().index_pressed.connect(func(i): $\"../..\".loadEvent(get_popup().get_item_text(i)))
 "
 
-[node name="EventEditor" type="Node2D"]
+[node name="EventEditor" type="Node2D" unique_id=392270222]
 script = SubResource("GDScript_jcq8v")
 
-[node name="ChessScroll" type="Control" parent="."]
+[node name="ChessScroll" type="Control" parent="." unique_id=728096642]
 layout_mode = 3
 anchors_preset = 0
 offset_right = 1290.0
@@ -103,15 +127,15 @@ steps = 43
 length = 24
 metadata/_custom_type_script = "uid://dsm0luhaq03go"
 
-[node name="TabContainer" type="TabContainer" parent="."]
+[node name="TabContainer" type="TabContainer" parent="." unique_id=1423795518]
 offset_left = 712.0
 offset_top = 252.0
 offset_right = 1280.0
 offset_bottom = 723.0
-current_tab = 2
+current_tab = 1
 tab_focus_mode = 0
 
-[node name="Data" type="Label" parent="TabContainer"]
+[node name="Data" type="Label" parent="TabContainer" unique_id=626471621]
 visible = false
 layout_mode = 2
 text = "
@@ -121,7 +145,7 @@ Icon:
 Description:"
 metadata/_tab_index = 0
 
-[node name="Icon" type="LineEdit" parent="TabContainer/Data"]
+[node name="Icon" type="LineEdit" parent="TabContainer/Data" unique_id=13213916]
 layout_mode = 0
 offset_left = 48.0
 offset_top = 13.0
@@ -129,19 +153,18 @@ offset_right = 460.0
 offset_bottom = 36.0
 placeholder_text = "ui/chart-editor/events/eventArrow"
 
-[node name="Description" type="LineEdit" parent="TabContainer/Data"]
+[node name="Description" type="LineEdit" parent="TabContainer/Data" unique_id=1725489523]
 layout_mode = 0
 offset_left = 113.0
 offset_top = 52.0
 offset_right = 536.0
 offset_bottom = 110.0
 
-[node name="Variables" type="Control" parent="TabContainer"]
-visible = false
+[node name="Variables" type="Control" parent="TabContainer" unique_id=192080622]
 layout_mode = 2
 metadata/_tab_index = 1
 
-[node name="Add" type="Button" parent="TabContainer/Variables"]
+[node name="Add" type="Button" parent="TabContainer/Variables" unique_id=2107417683]
 layout_mode = 0
 offset_left = 471.0
 offset_top = 4.0
@@ -150,21 +173,25 @@ offset_bottom = 27.0
 text = "Add
 "
 
-[node name="Scroll" type="ScrollContainer" parent="TabContainer/Variables"]
+[node name="Scroll" type="ScrollContainer" parent="TabContainer/Variables" unique_id=298055801]
 layout_mode = 0
 offset_top = 42.0
 offset_right = 568.0
-offset_bottom = 542.0
+offset_bottom = 446.0
 
-[node name="Container" type="VBoxContainer" parent="TabContainer/Variables/Scroll"]
-custom_minimum_size = Vector2(0, 500)
+[node name="Container" type="VBoxContainer" parent="TabContainer/Variables/Scroll" unique_id=816676597]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+script = SubResource("GDScript_05vim")
 
-[node name="Code" type="Control" parent="TabContainer"]
+[node name="Code" type="Control" parent="TabContainer" unique_id=465852716]
+visible = false
 layout_mode = 2
 metadata/_tab_index = 2
 
-[node name="Button" type="Button" parent="TabContainer/Code"]
+[node name="Button" type="Button" parent="TabContainer/Code" unique_id=960124406]
 layout_mode = 0
 offset_left = 473.0
 offset_top = 3.0
@@ -172,12 +199,14 @@ offset_right = 566.0
 offset_bottom = 26.0
 text = "Save Code"
 
-[node name="Event Code" type="CodeEdit" parent="TabContainer/Code"]
+[node name="Event Code" type="CodeEdit" parent="TabContainer/Code" unique_id=198487993]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 10.0
 offset_top = 41.0
+offset_right = -10.0
 grow_horizontal = 2
 grow_vertical = 2
 text = "func onLocalEvent(variables: Dictionary):
@@ -191,12 +220,12 @@ auto_brace_completion_enabled = true
 auto_brace_completion_highlight_matching = true
 script = SubResource("GDScript_yx6pg")
 
-[node name="Panel" type="Panel" parent="."]
+[node name="Panel" type="Panel" parent="." unique_id=1856691697]
 offset_left = 707.0
 offset_right = 1279.0
 offset_bottom = 85.0
 
-[node name="NewEvent" type="Button" parent="Panel"]
+[node name="NewEvent" type="Button" parent="Panel" unique_id=290115130]
 layout_mode = 0
 offset_left = 245.0
 offset_top = 37.0
@@ -204,7 +233,7 @@ offset_right = 338.0
 offset_bottom = 60.0
 text = "New Event"
 
-[node name="DynamicFileMenuButton" type="MenuButton" parent="Panel"]
+[node name="DynamicFileMenuButton" type="MenuButton" parent="Panel" unique_id=1999236177]
 layout_mode = 0
 offset_left = 66.0
 offset_top = 35.0
@@ -215,7 +244,7 @@ script = SubResource("GDScript_lohrh")
 dir_to_look = "custom_events/"
 metadata/_custom_type_script = "uid://cvvli26q7wviq"
 
-[node name="EventName" type="Label" parent="Panel"]
+[node name="EventName" type="Label" parent="Panel" unique_id=271353634]
 layout_mode = 0
 offset_left = 8.0
 offset_top = 41.0
@@ -223,8 +252,10 @@ offset_right = 65.0
 offset_bottom = 56.0
 text = "Event:"
 
-[node name="FileDialog" type="FileDialog" parent="."]
+[node name="FileDialog" type="FileDialog" parent="." unique_id=1479728216]
 oversampling_override = 1.0
 initial_position = 1
 size = Vector2i(800, 500)
 filters = PackedStringArray("*.json")
+
+[connection signal="child_order_changed" from="TabContainer/Variables/Scroll/Container" to="TabContainer/Variables/Scroll/Container" method="_on_child_order_changed"]
