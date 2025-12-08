@@ -25,11 +25,13 @@ func _init():
 	
 func _ready():
 	var char_name = opponentName if isOpponent else characterName
-	if !character: character = Character.new(char_name,!isOpponent)
+	if !character: 
+		character = Character.create_from_name(char_name,!isOpponent)
+	
 	else:
 		if character.curCharacter != char_name:
 			var old_pos = character._position
-			character = Character.new(char_name,character.isPlayer)
+			character = Character.create_from_name(char_name,character.isPlayer)
 			character._position = old_pos
 		else: character.reparent(self)
 	

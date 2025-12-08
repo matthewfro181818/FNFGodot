@@ -4,7 +4,7 @@
 resource_name = "SpectrumAnalyzer"
 
 [resource]
-bus/0/volume_db = -9.632782
+bus/0/volume_db = -5.042245
 bus/1/name = &"Visualizer"
 bus/1/solo = false
 bus/1/mute = false

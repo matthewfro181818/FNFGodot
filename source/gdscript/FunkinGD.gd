@@ -11,6 +11,7 @@ const Bar = preload("uid://cesg7bsxvgdcm")
 const EventNoteUtils = preload("uid://dqymf0mowy0dt")
 const Note = preload("uid://deen57blmmd13")
 const NoteHit = preload("uid://dx85xmyb5icvh")
+const NoteStyleData = preload("uid://by78myum2dx8h")
 const StrumNote = preload("uid://coipwnceltckt")
 
 const Stage = preload("uid://dh7syegxufdht")
@@ -95,7 +96,15 @@ static var songStarted: bool:
 	get(): return !!Conductor.songs
 
 static var songLength: float:
-	get(): return game._songLength
+	set(val):
+		if songLength == val: return
+		songLength = val
+		songLengthSeconds = val*0.001
+static var songLengthSeconds: float:
+	set(val):
+		if songLengthSeconds == val: return
+		songLengthSeconds = val
+		songLength = val*1000.0
 	
 static var difficulty: String: 
 	get(): return Song.difficulty
@@ -174,12 +183,11 @@ static func precacheSound(path: String) -> AudioStreamOggVorbis: return Paths.so
 static func precacheVideo(path: String) -> VideoStreamTheora: return Paths.video(path) ##Precache a video file.
 	
 static func addCharacterToList(character: StringName, type: Variant = 'bf') -> void: ##Precache character.
-	if not (Paths.character(character) and game): return
-	if type is int: game.addCharacterToList(type,character); return
+	if type is int: game.addCharacterToList(character, type); return
 	match StringName(type):
-		&'bf',&'boyfriend': game.addCharacterToList(0,character)
-		&'dad':game.addCharacterToList(1,character)
-		&'gf':game.addCharacterToList(2,character)
+		&'bf',&'boyfriend': game.addCharacterToList(character, 0)
+		&'dad':game.addCharacterToList(character, 1)
+		&'gf':game.addCharacterToList(character, 2)
 #endregion
 
 
@@ -673,7 +681,10 @@ static func startNoteTween(tag: String, noteID: Variant, values: Dictionary, tim
 #endregion
 
 #region Note Methods
-static func createStrumNote(note_data: int, style: String = 'funkin', tag: StringName = &''): ##Returns a new Strum Note. If you want to add the Strum to a group, see also [method addSpriteToGroup].
+static func createStrumNote(note_data: int, style: StringName = &'funkin', tag: StringName = &''): ##Returns a new Strum Note. If you want to add the Strum to a group, see also [method addSpriteToGroup].
+	if !NoteStyleData._load_style(style):
+		debug_message("Error creating Strum Note: '"+style+"' style don't exists!",Color.RED)
+		return
 	var strum: StrumNote = StrumNote.new(note_data)
 	strum.loadFromStyle(style)
 	if tag: _insert_sprite(tag,strum)
@@ -947,16 +958,30 @@ static func addScript(path: String) -> Object:
 	var resource = script.new()
 	resource.set(&'scriptPath',path)
 	resource.set(&'modFolder',Paths.getModFolder(path))
-	return resource if _insert_script(resource,path) else null
+	return resource if registerScript(resource,path) else null
 
-
-
-
+static func registerCallback(script: Object, function: StringName) -> void: 
+	if !script: return
+	var args = arguments.get(script.get_instance_id())
+	if !args: 
+		debug_message("Error on Register Callback: Script is not registred yet.");
+		return
+	
+	if !function in args: 
+		debug_message("Error on Register Callback: Script don't have "+function+" method.");
+		return
+	
+	var list = method_list.get(function)
+	if list and function in list:  
+		debug_message("Error on Register Callback: Callback already registred in this script.");
+		return
+	_register_callback_no_check(script,function)
+	
 ##Disables callbacks, useful if you no longer need to use them. Example:
 ##[codeblock]
 ##disableCallback(self,'onUpdate') #This disable the game to call "onUpdate" in this script
 ##[/codeblock]
-static func disableCallback(script: Variant, function: StringName):
+static func unregisterCallback(script: Variant, function: StringName):
 	if !script: return
 	var func_scripts = method_list.get(function); if !func_scripts: return
 	func_scripts.erase(_get_script(script))
@@ -1068,8 +1093,8 @@ static func _step_hit() -> void: curStep = Conductor.step; callOnScripts(&'onSte
 static func _section_hit() -> void: curSection = Conductor.section;callOnScripts(&'onSectionHit')
 #endregion
 
-static func _insert_script(script: Object, path: String = '') -> bool:
-	var inserted = super._insert_script(script,path)
+static func registerScript(script: Object, path: String = '') -> bool:
+	var inserted = super.registerScript(script,path)
 	if inserted: init_gd()
 	return inserted
 
@@ -1077,7 +1102,7 @@ static func _clear_scripts(absolute: bool = false):
 	super._clear_scripts(absolute)
 	if !started: return
 	started = false
-	debugMode = false
+	debugMode = OS.is_debug_build()
 	for i in Conductor_Signals: Conductor[i].disconnect(Conductor_Signals[i])
 #endregion
 
@@ -1086,4 +1111,5 @@ static func getArrayIndex(array,index: int,default: Variant) -> Variant:
 	if index >= 0 and index < array.size(): return array[index]
 	return default
 
-static func debugPrint(string: Variant, color: Color = Color.WHITE): show_funkin_warning(str(string),color,false)
+static func debugPrint(string: Variant, color: Color = Color.WHITE): 
+	debug_message(str(string),color,false)

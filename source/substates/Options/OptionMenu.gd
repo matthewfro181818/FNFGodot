@@ -76,7 +76,9 @@ static func createOptionInterator(option_data: Dictionary, value: Variant, at: A
 	
 	var type = typeof(value)
 	match type:
-		TYPE_BOOL: object = FunkinCheckBox.new(); pos.y -= 50
+		TYPE_BOOL: 
+			object = FunkinCheckBox.new();
+			pos.y -= 50
 		TYPE_FLOAT,TYPE_INT: 
 			if value_options:
 				object = TextRange.new()
@@ -98,7 +100,6 @@ static func createOptionInterator(option_data: Dictionary, value: Variant, at: A
 	
 	if at: 
 		var target = Vector2(at.width+pos.x,pos.y)
-		object.set('_position',target);
-		object.set('position',target);
+		object.set_position(target);
 		at.add_child(object)
 	return object

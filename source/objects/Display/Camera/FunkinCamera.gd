@@ -46,9 +46,7 @@ var _scroll_position: Vector2:
 	set(val): _scroll_position = val; _update_pivot();
 
 var _scroll_pivot_offset: Vector2: 
-	set(val):
-		if val == _scroll_pivot_offset: return
-		_scroll_pivot_offset = val; _update_scroll_transform() 
+	set(val): _scroll_pivot_offset = val; _update_scroll_transform() 
 
 var _real_scroll_position: Vector2
 
@@ -314,7 +312,7 @@ func _update_pivot() -> void:
 	var _real_pivot = pivot_offset - _scroll_position
 	var _scroll_pivot = _real_pivot
 	if zoom != 1.0: _scroll_pivot *= zoom
-	if angle_degrees: _scroll_pivot = _scroll_pivot.rotated(angle_degrees)
+	if angle_degrees: _scroll_pivot = _scroll_pivot.rotated(-angle_degrees)
 	_scroll_pivot_offset = (_scroll_pivot - _real_pivot)
 
 func _update_angle(update_pivo: bool = true)  -> void:

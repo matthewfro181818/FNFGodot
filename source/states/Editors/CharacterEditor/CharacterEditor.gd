@@ -13,7 +13,7 @@ var isMovingCamera: bool
 
 static var curCharacter: StringName
 
-var character_node: Character = Character.new()
+@onready var character_node: Character = Character.create_from_name(curCharacter)
 
 var character_ghost: Character
 
@@ -115,7 +115,7 @@ func _ready():
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	character_node.loadCharacter(curCharacter)
 	charJson = character_node.json
-	insertCharToEditor(character_node)
+	camera.add_child(character_node)
 	updateCharacterData()
 	
 	add_child(bar)
@@ -163,23 +163,22 @@ func createGhost(animation: StringName):
 	
 	character_ghost = Character.new()
 	character_ghost.loadCharacterFromJson(charJson)
+	character_ghost.danceAfterHold = false
+	character_ghost.danceOnAnimEnd = false
 	character_ghost._position = character_node._position
-	insertCharToEditor(character_ghost)
+	camera.add_child(character_ghost)
 	camera.move_child(character_ghost,character_node.get_index())
 	character_ghost.modulate.a = 0.5
 	character_ghost.animation.play(animation,true)
 	
 	
 func loadCharacter(json: StringName, isPlayer: bool = json.begins_with('bf')) -> Character:
-	var character: Character = Character.new(json,isPlayer)
-	insertCharToEditor(character)
-	return character
+	character_node.loadCharacter(json)
+	character_node.danceAfterHold = false
+	character_node.danceOnAnimEnd = false
+	character_node.isPlayer = isPlayer
+	return character_node
 
-func insertCharToEditor(char):
-	char.danceAfterHold = false
-	char.animation.auto_loop = false
-	char.on_load_character.connect(func(_old,_new):char.danceAfterHold = false;char.danceOnAnimEnd = false)
-	camera.add_child(char)
 	
 #region Animatiom Methods
 func selectAnim(anim_name: String):

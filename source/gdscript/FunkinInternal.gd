@@ -107,34 +107,40 @@ static func _find_script_path(script: Object) -> String:
 static func _script_path(path: String): return path if path.ends_with('.gd') else path+'.gd'
 
 static func get_arguments(script: Object) -> Dictionary[StringName,Variant]:
-	var functions: Dictionary[StringName,Variant] = {}
-	for f in script.get_script().get_script_method_list():
-		if f.flags == 33: continue
+	var functions: Dictionary[StringName,Variant]
+	if !script: return functions
+	var method_list = script.get_script_method_list()
+	var i = method_list.size()
+	while i:
+		i -= 1
+		var f = method_list[i]
 		
+		if f.flags & METHOD_FLAG_STATIC: continue
 		var args = f.args
 		if !args: functions[f.name] = null; continue
 		
 		var index: int = f.default_args.size()
 		while index: index -= 1; args[index].default = f.default_args[index];
 		functions[f.name] = args
-		
 	return functions
 
-static func _insert_script(script: Object, tag: String = '') -> bool:
+static func registerScript(script: Object, tag: String = '') -> bool:
 	if !script: return false
-	var args = get_arguments(script)
+	var args = get_arguments(script.get_script())
 	scriptsCreated[tag] = script
 	arguments[script.get_instance_id()] = args
-	
 	
 	for func_name in args:
 		if !func_name in method_list: method_list[func_name] = [script]
 		else: method_list[func_name].append(script)
 	
-	
-	if args.has(&'onCreate'): script.onCreate()
+	if args.has(&"onCreate"): script.onCreate()
 	if args.has(&'onCreatePost') and game and game.get(&'stateLoaded'): script.onCreatePost(); 
 	return true
+
+static func _register_callback_no_check(script: Object, function: StringName):
+	if !function in method_list: method_list[function] = [script]
+	else: method_list[function].append(script)
 
 static func removeScript(path: Variant):
 	var script: Object
@@ -217,7 +223,7 @@ static func _sign_value(value: Variant, type_to_convert: Variant.Type) -> Varian
 #endregion
 
 #region Warning Methods
-static func show_funkin_warning(warning: String, color: Color = Color.RED, only_show_when_debugging: bool = true):
+static func debug_message(warning: String, color: Color = Color.RED, only_show_when_debugging: bool = true):
 	if only_show_when_debugging and !debugMode: return
 	var text = Global.show_label_warning(warning,5.0)
 	text.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -252,7 +258,7 @@ static func _show_property_no_found_error(property: String) -> void:
 	var split = property.split('.')
 	var obj_name = split[0]
 	if split.size() > 1:
-		show_funkin_warning('Error on setting property "'+property.right(-obj_name.length()-1)+'": '+obj_name+" not founded")
+		debug_message('Error on setting property "'+property.right(-obj_name.length()-1)+'": '+obj_name+" not founded")
 	else:
-		show_funkin_warning('Error on setting property: '+obj_name+" not founded")
+		debug_message('Error on setting property: '+obj_name+" not founded")
 	return

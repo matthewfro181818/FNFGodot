@@ -12,17 +12,17 @@ static func getNotesFromData(songData: Dictionary = {}) -> Array[Note]:
 	var keyCount: int = songData.get('keyCount',4)
 	
 	var stepCrochet: float = Conductor.get_step_crochet(_bpm)
-	var stepCrochetDiv: float = stepCrochet*0.5
 	var types_founded: PackedStringArray
 	
 	var i: int = 0
 	var length = notesData.size()
+	
 	while i < length:
 		var section = notesData[i]
 		if section.changeBPM and section.bpm != _bpm:
 			_bpm = section.bpm
 			stepCrochet = Conductor.get_step_crochet(_bpm)
-			stepCrochetDiv = stepCrochet*0.5
+		
 		var note_index: int = 0
 		var notes_length = section.sectionNotes.size()
 		while note_index < notes_length:
@@ -31,11 +31,12 @@ static func getNotesFromData(songData: Dictionary = {}) -> Array[Note]:
 			
 			var note: NoteHit = createNoteFromData(note_data,section,keyCount)
 			if !_insert_note_to_array(note,_notes): continue
+			
 			if note.noteType: types_founded.append(note.noteType)
 			
 			var susLength = note_data.get('l',0.0)
 			if susLength < stepCrochet: continue 
-			for s in _create_note_sustains(note,susLength-stepCrochetDiv): _insert_note_to_array(s,_notes,false)
+			for s in _create_note_sustains(note,susLength): _insert_note_to_array(s,_notes,false)
 			
 		i += 1
 	var type_unique: PackedStringArray
@@ -53,12 +54,22 @@ static func _insert_note_to_array(note: Note, array: Array, check_duplicated_not
 		
 		#Remove duplicated note
 		if !sameNote(note,prev_note): continue
+		
 		if note.sustainLength < prev_note.sustainLength: return false
+		
+		array.remove_at(index)
+		_remove_sustains_from_note(prev_note.sustainParents,array)
 		array.insert(index + 1,note);
-		for i in array.pop_at(index).sustainParents: array.erase(i);
+	
 	array.push_front(note)
 	return true
-		
+
+static func _remove_sustains_from_note(sustains: Array[NoteSustain], array: Array) -> void:
+	for i in sustains:
+		var length = array.size(); 
+		while length: 
+			length -= 1; 
+			if array[length] == i: array.remove_at(length); break
 
 static func _create_note_sustains(note: Note, length: float) -> Array[NoteSustain]:
 	var sustainFill: NoteSustain = createSustainFromNote(note,false)

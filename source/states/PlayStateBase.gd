@@ -398,20 +398,16 @@ func loadSongObjects() -> void:
 	camHUD.removeFilters()
 	camOther.removeFilters()
 	
-	#print('Loading Stage')
-	Stage.loadSprites()
+	Stage.loadSprites(); #print('Loading Stage')
 	
-	#print('Loading Scripts')
-	_load_song_scripts()
+	_load_song_scripts(); #print('Loading Scripts')
 	
-	#print('Loading Song Objects')
-	super.loadSongObjects()
 	
-	#print('Loading Events')
-	loadEventsScripts()
+	super.loadSongObjects() #print('Loading Song Objects')
 	
-	#print('Loading Characters')
-	loadCharactersFromData()
+	loadEventsScripts() #print('Loading Events')
+	
+	loadCharactersFromData() #print('Loading Characters')
 	
 	if !inModchartEditor:
 		DiscordRPC.state = 'Now Playing: '+SongData.songName
@@ -419,7 +415,12 @@ func loadSongObjects() -> void:
 	
 func loadEventsScripts():
 	for i in Paths.getFilesAtAbsolute(Paths.exePath+'/assets/custom_events',false,['gd'],true): FunkinGD.addScript('custom_events/'+i)
-	for event in eventNotes: 
+	
+	var length = eventNotes.size()
+	var i: int = 0
+	while i < length:
+		var event = eventNotes[i]
+		i += 1
 		var event_path ='custom_events/'+event.e
 		FunkinGD.addScript(event_path)
 		
@@ -545,12 +546,12 @@ func reloadPlayState():
 	
 	Global.onSwapTree.disconnect(destroy)
 	Global.onSwapTree.connect(func():
-		for vars in ['seenCutscene','playAsOpponent']: state[vars] = get(vars)
+		for vars in [&'seenCutscene',&'playAsOpponent']: state[vars] = get(vars)
 		destroy(false),CONNECT_ONE_SHOT
 	)
 
 #region Modding Methods
-func chartEditor(): 
+func chartEditor() -> void: 
 	Global.doTransition().finished.connect(func():
 		var chartEditor = ChartEditorScene.instantiate()
 		Global.swapTree(chartEditor,false); 

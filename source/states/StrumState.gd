@@ -3,6 +3,7 @@ extends Node
 @export_category('Notes')
 const NoteStyleData = preload("uid://by78myum2dx8h")
 const NoteSplash = preload("uid://cct1klvoc2ebg")
+const SplashPool = preload("uid://dcbm0oeieae0v")
 const Note = preload("uid://deen57blmmd13")
 
 const EventNoteUtils = preload("uid://dqymf0mowy0dt")
@@ -33,7 +34,6 @@ var exitingSong: bool
 var clear_song_after_exiting: bool = true
 
 var songSpeed: float: set = set_song_speed 
-var _songLength: float
 var _isSongStarted: bool
 
 static var SONG: Dictionary:
@@ -81,7 +81,7 @@ var _notes_to_hit: Array[Note]
 
 var canHitNotes: bool = true
 
-var _splashes_loaded: Dictionary
+
 
 var splashesEnabled: bool = ClientPrefs.data.splashesEnabled
 var opponentSplashes: bool = splashesEnabled and ClientPrefs.data.opponentSplashes
@@ -198,13 +198,14 @@ func clearSongNotes():
 	notes.members.clear()
 	_respawnIndex = 0
 	_unspawnIndex = 0
+	
 	unspawnNotes.clear()
 
 func startSong() -> void: ##Begins the song. See also [method loadSong].
 	if !Conductor.songs: return
 	Conductor.resumeSongs()
 	_isSongStarted = true
-	_songLength = Conductor.songs[0].stream.get_length()*1000.0
+	FunkinGD.songLength = Conductor.songLength
 
 ##Seek the Song Position to [param time] in miliseconds.[br]
 ##If [param kill_notes] is [code]true[/code], the notes above the [param time] will be removed.
@@ -438,11 +439,17 @@ func hitNote(note: Note) -> void: ##Called when the hits a [NoteBase]
 	note._on_hit()
 	_strum_confirm_from_note(note)
 
+func splashAllowed(n: Note) -> bool:
+	if n.isSustainNote: return !n.splashDisabled and splashesEnabled and n.ratingMod <= 1 and !n.isBeingDestroyed
+	return !n.splashDisabled and splashesEnabled and n.ratingMod <= 1 and (isPlayerNote(n) or opponentSplashes)
+
 func _disable_hold_splash_from_strum(strum: StrumNote):
 	if !strum: return
 	var id = strum.get_instance_id()
 	var splash = grpNoteHoldSplashes.get(id)
 	if splash: splash.visible = false; grpNoteHoldSplashes[id] = null
+#endregion
+
 func isPlayerNote(note: Note) -> bool: return note.mustPress != playAsOpponent
 
 func noteMiss(note: Note, kill_note: bool = true) -> void: ##Called when the player miss a [Note]
@@ -472,57 +479,27 @@ func _disable_note_sustains(note: Note) -> void:
 
 #region Splash Methods
 func createSplash(note) -> NoteSplash: ##Create Splash
-	var strum: StrumNote = note.strumNote
-	if !strum or !strum.visible: return
+	if !note: return
+	var strum: StrumNote = note.strumNote; if !strum or !strum.visible: return
+	var splash = SplashPool.createSplashFromNote(note)
+	if !splash: return
 	
 	var splashParent = note.splashParent
-	var splash: NoteSplash = _check_splash_from_note(note)
-	if !splash:
-		splash = _create_splash_from_note(note); if !splash: return
-		if splashParent: grpNoteSplashes.members.append(splash); splashParent.add_child(splash)
-		else: grpNoteSplashes.add(splash)
-	else: 
-		splash.strum = strum
-		splash.show_splash()
-		if splashParent: splash.reparent(splashParent,false)
-		elif splash._is_custom_parent: splash.reparent(grpNoteSplashes,false)
+	if splashParent: 
+		if splash.is_inside_tree(): splash.reparent(splashParent,false)
+		else: splash.add_child(splashParent); grpNoteSplashes.members.append(splash); 
+	else:
+		if splash.is_inside_tree(): splash.reparent(grpNoteSplashes,false)
+		else: grpNoteSplashes.add(splash); 
 	
-	if splash.holdSplash: grpNoteHoldSplashes[strum.get_instance_id()] = splash
-	splash._is_custom_parent = !!splashParent
+	
+	splash.strum = strum
+	if splash.holdSplash: 
+		_hide_hold_splash_from_strum(strum); 
+		grpNoteHoldSplashes[strum.get_instance_id()] = splash
+	
 	splash.isPixelSplash = isPixelStage
-	return splash
-
-func _create_splash_from_note(note: Note) -> NoteSplash:
-	if !note: return
-	var splash = NoteSplash.loadSplashFromNote(note); if !splash: return
-	splash.strum = note.strumNote
-	_get_splash_storage(note.splashStyle,note.splashName,note.splashPrefix).append(splash)
-	return splash
-
-func _get_splash_storage(style: StringName, name: StringName, prefix: StringName) -> Array:
-	return _splashes_loaded.get_or_add(style,{}).get_or_add(name,{}).get_or_add(prefix,[])
-
-func _check_splash_from_note(note: Note) -> NoteSplash:
-	return _check_sustain_splash_avaliable(note) if note.isSustainNote else\
-		_check_splash(note.splashStyle,note.splashName,note.splashPrefix)
-
-func _check_sustain_splash_avaliable(note: Note):
-	if !note.strumNote: return
-	var splash: NoteSplash = grpNoteHoldSplashes.get(note.strumNote.get_instance_id())
-	if splash and\
-		splash.splashStyle == note.splashStyle and \
-		splash.splashPrefix == note.splashPrefix and \
-		splash.splashName == note.splashName: return splash
-	return _check_splash(note.splashStyle,note.splashName,note.splashPrefix)
-
-func _check_splash(style: StringName, splash_name: StringName, prefix: StringName) -> NoteSplash:
-	for s in _get_splash_storage(style,splash_name,prefix): if !s.visible: return s
-	return
-
-func splashAllowed(n: Note) -> bool:
-	if n.isSustainNote: return !n.splashDisabled and splashesEnabled and n.ratingMod <= 1 and !n.isBeingDestroyed
-	return !n.splashDisabled and splashesEnabled and n.ratingMod <= 1 and (isPlayerNote(n) or opponentSplashes)
-
+	return 
 func _hide_hold_splash_from_strum(strum: StrumNote):
 	if !strum: return
 	var id = strum.get_instance_id()
@@ -532,6 +509,7 @@ func _hide_hold_splash_from_strum(strum: StrumNote):
 
 func destroy(absolute: bool = true): ##Remove the state
 	Conductor.clearSong(exitingSong)
+	SplashPool.splashes_loaded.clear()
 	
 	if absolute: clear(); queue_free(); return
 	
@@ -567,7 +545,10 @@ func _set_middlescroll(value):
 
 func clear() -> void: 
 	clearSongNotes() #Replaced in PlayStateBase
-	clear_splashes()
+	
+	grpNoteSplashes.members.clear()
+	grpNoteHoldSplashes.clear()
+	
 	unspawnNotes.clear()
 	
 	NoteStyleData.styles_loaded.clear()
@@ -575,9 +556,3 @@ func clear() -> void:
 	Paths.clearLocalFiles()
 	inModchartEditor = false
 	isPixelStage = false
-	
-func clear_splashes():
-	for file in _splashes_loaded.values(): for style in file.values(): for prefix in style.values(): for splashes in prefix: splashes.queue_free()
-	grpNoteHoldSplashes.clear()
-	grpNoteSplashes.members.clear()
-	_splashes_loaded.clear()

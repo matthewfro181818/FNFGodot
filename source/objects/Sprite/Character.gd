@@ -1,10 +1,14 @@
 @icon("res://icons/icon.png")
 ##A Character 2D Class
-class_name Character
-extends FunkinSprite
+class_name Character extends FunkinSprite
+
 const NoteHit = preload("uid://dx85xmyb5icvh")
 const Song = preload("uid://cerxbopol4l1g")
-
+enum Type{
+	BOYFRIEND,
+	OPPONENT,
+	GF
+}
 @export var curCharacter: StringName: set = loadCharacter ##The name of the character json.
 
 ##how many beats should pass before the character dances again.[br][br]For example: 
@@ -68,37 +72,29 @@ var jsonScale: float = 1. ##The Character Scale from his json.
 #endregion
 
 var origin_offset: Vector2
-signal on_load_character(new_character: StringName, old_character: StringName)
-
-func _init(character: String = &'', player: bool = false):
-	
-	autoDance = not isPlayer
+func _init():
 	super._init(true)
-	
 	animation.auto_loop = true
-	if character: 
-		name = character
-		loadCharacter(character)
-	
-	isPlayer = player
 	animation.animation_finished.connect(
-		func(_anim):
-			if specialAnim or danceOnAnimEnd and _anim.begins_with('sing'): dance();
+		func(_anim): if specialAnim or danceOnAnimEnd and _anim.begins_with('sing'): dance();
 	)
-	
+
 func _ready() -> void: Conductor.bpm_changes.connect(updateBPM)
 
 func _enter_tree() -> void: updateBPM()
 
-const dance_anim: Array = [&'danceLeft',&'danceRight']
 func updateBPM(): ##Update the character frequency.
 	holdLimit = (Conductor.stepCrochet * (0.0011 / Conductor.music_pitch))
-	for dances in dance_anim:
-		var animData = animation.getAnimData(dances)
+	_update_dance_animation_speed()
+	
+const dance_anim: Array = [&'danceLeft',&'danceRight']
+func _update_dance_animation_speed():
+	if !hasDanceAnim: return
+	for i in dance_anim:
+		var animData = animation.getAnimData(i)
 		if !animData: continue
 		var anim_length = 1.0/animData.fps * animData.frames.size()
-		animData.speed_scale = clamp(anim_length/(Conductor.crochet/700.0),1.0,3.0)
-
+		animData.speed_scale = clamp(anim_length/(Conductor.crochet*0.007),1.0,3.0)
 #region Character Data
 
 func loadCharacter(char_name: StringName) -> Dictionary: ##Load Character. Returns a [Dictionary] with the json found data.
@@ -108,14 +104,12 @@ func loadCharacter(char_name: StringName) -> Dictionary: ##Load Character. Retur
 	
 	if !new_json:
 		_clear()
-		on_load_character.emit(char_name,curCharacter)
 		curCharacter = &''
 		return new_json
 	
 	loadCharacterFromJson(new_json)
-	on_load_character.emit(char_name,curCharacter)
+
 	curCharacter = char_name
-	name = char_name
 	return json
 
 func loadCharacterFromJson(new_json: Dictionary[StringName,Variant]):
@@ -129,7 +123,7 @@ func loadCharacterFromJson(new_json: Dictionary[StringName,Variant]):
 	reloadAnims()
 	
 	return json
-	
+
 func loadData():
 	var health_color = json.healthbar_colors
 	healthBarColors = Color(
@@ -150,7 +144,8 @@ func loadData():
 	scale = Vector2(jsonScale,jsonScale)
 	danceAfterHold = json.danceAfterHold
 	danceOnAnimEnd = json.danceOnAnimEnd
-
+	_update_character_flip()
+	
 func getCameraPosition() -> Vector2: 
 	var pos = getMidpoint()
 	if isGF: return getMidpoint() + cameraPosition 
@@ -267,8 +262,14 @@ func _update_hold_limit() -> void: _real_hold_limit = holdLimit*singDuration
 #region Setters
 func set_hold_limit(limit: float) -> void: holdLimit = limit; _update_hold_limit()
 func set_sing_duration(duration: float) -> void: singDuration = duration; _update_hold_limit()
-func set_is_player(isP: bool): isPlayer = isP; flipX = !json.flipX if isP else json.flipX
+func set_is_player(isP: bool): 
+	isPlayer = isP; 
+	_update_character_flip()
+
+func _update_character_flip(): flipX = !json.flipX if isPlayer else json.flipX
+
 func set_pivot_offset(pivot: Vector2): pivot += origin_offset; super.set_pivot_offset(pivot)
+
 func set_has_dance_anim(has: bool):
 	if hasDanceAnim == has: return
 	hasDanceAnim = has
@@ -295,6 +296,15 @@ func _clear() -> void:
 	json.assign(getCharacterBaseData())
 
 #region Static Methods
+static func create_from_name(json_name: String, type: Type = Type.OPPONENT) -> Character:
+	var script = FunkinGD.loadScript('characters/'+json_name+'.gd')
+	var char: Character = script.new() if script else Character.new()
+	prints(json_name,type,Type.BOYFRIEND)
+	char.loadCharacter(json_name)
+	char.isPlayer = type == Type.BOYFRIEND
+	char.isGF = type == Type.GF
+	return char
+
 static func _convert_psych_to_original(json: Dictionary) -> Dictionary[StringName,Variant]:
 	var new_json: Dictionary[StringName,Variant] = getCharacterBaseData()
 	
@@ -332,8 +342,9 @@ static func _convert_psych_to_original(json: Dictionary) -> Dictionary[StringNam
 
 func _property_get_revert(property: StringName) -> Variant: #Used in ModchartEditor
 	match property:
-		'scale': return Vector2(jsonScale,jsonScale)
+		&'scale': return Vector2(jsonScale,jsonScale)
 	return super._property_get_revert(property)
+	
 	
 static func getCharacterBaseData() -> Dictionary[StringName,Variant]: ##Returns a base to character data.
 	return {

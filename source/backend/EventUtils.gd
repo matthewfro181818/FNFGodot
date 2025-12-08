@@ -6,22 +6,21 @@ static func _get_events_data(events: Array) -> Array[Dictionary]:
 	for data in events:
 		if data is Array: new_events.append_array(_convert_event_to_new(data))
 		else:
-			var event_variables = get_event_variables(data.e)
+			var event_vars = get_event_variables(data.e)
 			data.merge(event_base,false);
 			if data.v is Dictionary: 
-				for i in event_variables: if !data.v.has(i): data.v[i] = event_variables[i].default_value
+				for i in event_vars: if !data.v.has(i): data.v[i] = event_vars[i].default_value
 			else:
 				var val = data.v
 				data.v = {}
-				for i in event_variables: data.v[i] = event_variables[i].default_value
-				data.v[event_variables.keys()[0]] = val
-			
+				for i in event_vars: data.v[i] = event_vars[i].default_value
+				data.v[event_vars.keys()[0]] = val
 			new_events.append(data)
 	return new_events
 
 static func _convert_event_to_new(data: Array) -> Array[Dictionary]:
 	var new_events: Array[Dictionary]
-	for i in data[1]: 
+	for i in data[1]:
 		var event = _get_event_base()
 		var event_name: StringName = i[0]
 		var variables = get_event_variables(event_name)
@@ -48,7 +47,7 @@ static func _convert_event_value_type(value: Variant, type: Variant.Type, defaul
 		TYPE_FLOAT,TYPE_INT: if value_type == TYPE_STRING and !value and default_value: return default_value
 	return type_convert(value,type)
 
-static func loadEvents(chart: Array = []) -> Array[Dictionary]:
+static func loadEvents(chart: Array) -> Array[Dictionary]:
 	var events = _get_events_data(chart)
 	events.sort_custom(func(a,b):return a.t < b.t)
 	return events
@@ -107,7 +106,7 @@ static func get_event_variables_no_cache(event_name: StringName) -> Dictionary:
 	DictUtils.convertKeysToStringNames(event_data.variables,true)
 	var variables = event_data.variables
 	for i in variables: _fix_variable_data(variables[i])
-	return event_data
+	return variables
 
 static func get_event_default_values(event_name: StringName) -> Dictionary[StringName,Variant]:
 	var default: Dictionary[StringName,Variant]
@@ -149,7 +148,6 @@ static func _fix_variable_data(data: Dictionary) -> Dictionary:
 	data.type = value_type
 	
 	match value_type:
-		TYPE_COLOR: data.default_value = Color.html(default_value)
 		TYPE_VECTOR2: data.default_value = Vector2(default_value[0],default_value[1])
 		TYPE_VECTOR2I: data.default_value = Vector2i(default_value[0],default_value[1])
 		TYPE_VECTOR3: data.default_value = Vector3(default_value[0],default_value[1],default_value[2])

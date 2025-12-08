@@ -37,7 +37,7 @@ static func setProperty(property: String, value: Variant, target: Variant):
 				target = target[_property]
 				i += 1
 				continue
-			FunkinInternal.show_funkin_warning(
+			FunkinInternal.debug_message(
 				'Error on setting property: '+str(_property)+" not founded in "+str(target)
 			)
 			return

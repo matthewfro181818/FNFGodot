@@ -3,7 +3,7 @@ extends "res://source/states/PlayStateBase.gd"
 @export var boyfriend: Character
 @export var dad: Character
 @export var gf: Character
-		
+
 static var boyfriendCameraOffset: Vector2 = Vector2.ZERO
 static var girlfriendCameraOffset: Vector2 = Vector2.ZERO
 static var opponentCameraOffset: Vector2 = Vector2.ZERO
@@ -106,32 +106,26 @@ func insertCharacterInGroup(character: Character,group: SpriteGroup) -> void:
 	character._position = Vector2(group.x,group.y) + character.positionArray
 	group.add(character,true)
 
-func addCharacterToList(type: int = 0,charFile: StringName = 'bf') -> Character:
+func addCharacterToList(charFile: String, type: Character.Type = Character.Type.BOYFRIEND) -> Character:
 	var group
-	var charType: String = 'boyfriend'
+	var charType: StringName = &'boyfriend'
 	match type:
-		1: group = dadGroup; charType = 'dad'
-		2: group = gfGroup; charType = 'gf'
+		1: group = dadGroup; charType = &'dad'
+		2: group = gfGroup; charType = &'gf'
 		_: group = boyfriendGroup
 		
 	if !Paths.file_exists('characters/'+charFile+'.json'): charFile = 'bf'
 	
 	#Check if the character is already created.
-	for chars in group.members:
-		if chars and chars.curCharacter == charFile: return chars
+	for chars in group.members: if chars and chars.curCharacter == charFile: return chars
 	
-	var newCharacter: Character = Character.new(charFile,type == 0)
+	var newCharacter: Character = Character.create_from_name(charFile,type)
+	newCharacter.set_position(newCharacter.get_position() + newCharacter.positionArray)
+	newCharacter.name = charType
+	
 	if group: group.add(newCharacter,false)
 	
-	newCharacter._position += newCharacter.positionArray
-	newCharacter.name = charType
-	newCharacter.isGF = (type == 2)
-	newCharacter.isPlayer = (type == 0)
-	
 	Paths.image(newCharacter.healthIcon)
-	
-	FunkinGD.addScript('characters/'+charFile+'.gd')
-	FunkinGD.callScript('characters/'+charFile+'.gd',&'onLoadThisCharacter',[newCharacter,charType])
 	FunkinGD.callOnScripts(&'onLoadCharacter',[newCharacter,charType])
 	insertCharacterInGroup(newCharacter,group)
 	newCharacter.visible = false
@@ -187,7 +181,7 @@ func changeCharacter(type: int = 0, character: StringName = 'bf') -> Object:
 	var group: SpriteGroup = get(char_name+'Group')
 	if !group: return
 	
-	var newCharacter = addCharacterToList(type,character)
+	var newCharacter = addCharacterToList(character,type)
 	if not newCharacter: return
 	
 	newCharacter.name = char_name

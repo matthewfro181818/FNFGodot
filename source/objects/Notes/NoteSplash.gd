@@ -16,10 +16,7 @@ var isPixelSplash: bool: set = _set_pixel ##If is a [u]pixel[/u] splash.
 @warning_ignore("unused_private_class_variable")
 var _is_custom_parent: bool #Used in StrumState.
 
-
 var strum: Node ##The Splash strum.
-
-var splash_scale: Vector2 = Vector2.ZERO ##Splash scale.
 
 var holdSplash: bool
 
@@ -47,7 +44,7 @@ func show_splash() -> void:
 	else: animation.play_random()
 
 func _update_animation_scale() -> void: 
-	animation.setAnimDataValue(&'hold',&'speed_scale',minf(Conductor.stepCrochetMs*15.0,1.5))
+	animation.setAnimDataValue(&'hold',&'speed_scale',minf(1.0 / (Conductor.stepCrochetMs*8.0),3.0))
 
 func _set_pixel(isPixel: bool):
 	if isPixel == isPixelSplash: return
@@ -75,7 +72,7 @@ func _process(_d) -> void:
 func followStrum() -> void:
 	if !strum: return
 	modulate.a = strum.modulate.a
-	if holdSplash: rotation = strum.rotation
+	#if holdSplash: rotation = strum.rotation
 	_position = strum._position
 
 ##Add animation to splash. Returns [code]true[/code] if the animation as added successfully.
